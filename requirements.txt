@@ -1,7 +1,8 @@
-sqlite3
 numpy
 torch
 tqdm
 pandas
 xgboost
 scikit-learn
+configparser
+requests
