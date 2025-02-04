@@ -2,14 +2,15 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Arial', sans-serif;
+    font-family: "Trebuchet MS", Helvetica, sans-serif; /* Updated font-family */
 }
 
 body {
-    background-color: #121826; 
+    background-color: #121826; /* background colour */
     color: white;
 }
 
+/* Navigation Bar (itself) */
 nav {
     display: flex;
     justify-content: space-between;
@@ -24,23 +25,29 @@ nav {
     align-items: center;
     font-size: 1.5rem;
     font-weight: bold;
-    color: #E6B400;
 }
 
-.account-icon {
+.nav-left .account-icon {
     width: 35px;
     height: 35px;
-    background-color: #E6B400; 
+    background-image: url('images/profileicon.png');
+    background-size: cover; /* covers the entire icon section */
+    background-position: center; 
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-right: 15px;
-    font-weight: bold;
-    color: #121826; 
 }
 
+/* Project Name (left side nav bar) */
+.nav-left span {
+    background: linear-gradient(45deg, #E6B400, #F5B800, #FFD700); 
+    -webkit-background-clip: text; /* stops the text from clipping (becomes a blur) */
+    color: transparent; /* makes the text color transparent to show the gradient */
+}
 
+/* Navigation Bar (right side) */
 .nav-right {
     display: flex;
     gap: 25px;
@@ -49,7 +56,7 @@ nav {
 .nav-right a {
     color: white;
     text-decoration: none;
-    font-size: 1rem;
+    font-size: 1.2rem; /* Increased font size for navigation links */
     font-weight: 600;
     transition: color 0.3s ease-in-out, transform 0.2s;
     padding: 5px 10px;
@@ -57,6 +64,29 @@ nav {
 }
 
 .nav-right a:hover {
-    color: #2ECC71; 
+    color: #2ECC71; /* nav bar hover effect */
     transform: translateY(-2px);
+}
+
+/* Homepage Description Section */
+.home-description {
+    position: absolute;
+    top: 50%;
+    left: 5%; 
+    transform: translateY(-50%);
+    text-align: left; 
+}
+
+.home-description h1 {
+    font-size: 2rem;  
+    font-weight: bold;
+    color: white;
+    max-width: 500px; 
+    line-height: 1.3;
+}
+
+.home-description .highlight {
+    background: linear-gradient(45deg, #E6B400, #F5B800, #FFD700); 
+    -webkit-background-clip: text; /* stops the text from clipping (becomes a blur) */
+    color: transparent; /* makes the text color transparent to show the gradient */
 }
