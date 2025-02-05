@@ -119,6 +119,9 @@ def merge_game_data(path='./data/teams'):
 
     return merged_df
 
+
+
+
 def calculate_ema(df, col, window_size):
     ema_column = [np.nan] * len(df)
 

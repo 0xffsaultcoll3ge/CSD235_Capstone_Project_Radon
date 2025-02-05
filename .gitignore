@@ -1,3 +1,5 @@
 docs/tmp.md
 tmp
-data/*
+tmp.py
+*.profraw
+capstone/*
