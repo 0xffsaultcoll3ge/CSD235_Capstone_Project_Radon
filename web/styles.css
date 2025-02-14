@@ -2,7 +2,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: "Trebuchet MS", Helvetica, sans-serif; /* Updated font */
+    font-family: "Trebuchet MS", Helvetica, sans-serif; 
 }
 
 body {
@@ -23,7 +23,7 @@ nav {
 .nav-left {
     display: flex;
     align-items: center;
-    font-size: 1.8rem; /* Increased text size */
+    font-size: 1.8rem; 
     font-weight: bold;
 }
 
@@ -56,7 +56,7 @@ nav {
 .nav-right a {
     color: white;
     text-decoration: none;
-    font-size: 1.2rem; /* Increased text size */
+    font-size: 1.2rem;
     font-weight: 600;
     transition: color 0.3s ease-in-out, transform 0.2s;
     padding: 5px 10px;
@@ -72,21 +72,21 @@ nav {
 .home-description {
     position: absolute;
     top: 50%;
-    left: 10%; /* Shifted left to create space for the logo */
+    left: 10%; /* shifted left to create space for the logo */
     transform: translateY(-50%);
     text-align: left; 
-    max-width: 400px; /* Prevents text from stretching too wide */
+    max-width: 400px; 
 }
 
 .home-description h1 {
-    font-size: 2.5rem; /* Slightly increased text size */
+    font-size: 2.5rem; 
     font-weight: bold;
     color: white;
     max-width: 500px; 
     line-height: 1.3;
 }
 
-/* Highlighted Text (Gradient Effect) */
+/* Highlighted Text in Description */
 .home-description .highlight {
     background: linear-gradient(45deg, #E6B400, #F5B800, #FFD700); 
     -webkit-background-clip: text; /* stops the text from clipping (becomes a blur) */
@@ -102,3 +102,35 @@ nav {
     width: 450px; 
     height: auto;
 }
+
+/* Predictions Page  */
+.predictions-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px; /* space inbetween each box (might adjust later) */
+    margin-top: 50px; 
+}
+
+.prediction-box {
+    background-color: #1A1F2E; 
+    color: white;
+    padding: 20px;
+    width: 300px; 
+    height: auto; /* box expands on the length of the content */
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    overflow-wrap: break-word; /* makes sure long works dont extend off page */
+}
+
+.prediction-box h2 {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+}
+
+.prediction-box p {
+    font-size: 1rem;
+    line-height: 1.4;
+}
+
+
