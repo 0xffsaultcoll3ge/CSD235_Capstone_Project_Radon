@@ -78,8 +78,45 @@ def get_team_data():
         return df.to_json()
     except Exception as e:
         return jsonify({"error": e})
+    
+
+@app.route('/api/nhl/odds/<int:gameId>', methods=['GET'])
+def get_game_odds(gameId):  # Add 'gameId' as a parameter
+    try:
+        odds_format = request.args.get('odds_format', default='american', type=str)
+
+        q = "SELECT * FROM odds WHERE gameId = :gameId"
+        df = pd.read_sql(q, engine, params={"gameId": gameId})
+       
+        if odds_format == 'decimal':
+            df['odds'] = df['odds'].apply(lambda x: american_to_decimal(x))
+        elif odds_format == 'american':
+            pass 
+        else:
+            return jsonify({"error": "Invalid odds format. Use 'american' or 'decimal'."}), 400
+
+        return df.to_json(orient='records'), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500  
+    
+@app.route('/api/nhl/odds/historical/<int:gameId>', methods=['GET'])
+def get_historical_odds(gameId): 
+    try:
+        q = "SELECT * FROM historicalOdds WHERE gameId = :gameId"
+        df = pd.read_sql(q, engine, params={"gameId": gameId})
+
+        return df.to_json(orient='records'), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500  
+    
+def american_to_decimal(american_odds):
+  
+    if american_odds > 0:
+        return (american_odds / 100) + 1
+    else:
+        return (100 / abs(american_odds)) + 1
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True)  
 
-        
+  
