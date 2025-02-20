@@ -79,19 +79,17 @@ with open(csv_filename, mode="w", newline="", encoding="utf-8") as file:
 
             for row in rows:
                 # Check if the row contains a date
-                date_tag = row.find("b", class_="dBY")
-                if date_tag:
-                    raw_date = date_tag.text.strip()  # Extract raw text, e.g., "12 January 2024"
-                    try:
-                        date_obj = datetime.strptime(raw_date, "%d %B %Y")  # Parse into datetime
-                        current_date = date_obj.strftime("%Y%m%d")  # Convert to YYYYMMDD
-                    except ValueError:
-                        print(f"Skipping row with invalid date format: {raw_date}")
-                        continue
+                if "higher" in (row.get("class") or ""):
+                    date_tag = row.find("b", class_="dBY")
+                    if date_tag:
+                        raw_date = date_tag.text.strip()
+                        date_obj = datetime.strptime(raw_date, "%d %B %Y")
+                        current_date = date_obj.strftime("%Y%m%d")
+                
 
                 # Check if the row contains a match
                 match_tag = row.find("a")
-                if match_tag and current_date:
+                if match_tag:
                     match_text = match_tag.text.strip()
 
                     # Extract teams
@@ -115,6 +113,8 @@ with open(csv_filename, mode="w", newline="", encoding="utf-8") as file:
 
                     # Save to CSV
                     writer.writerow([season, current_date, team1, team2, odds1, oddsX, odds2])
+                    
+                
 
 print(f"All season data saved to {csv_filename}")
 
