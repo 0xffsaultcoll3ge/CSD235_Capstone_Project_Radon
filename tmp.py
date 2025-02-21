@@ -1,14 +1,21 @@
-import pandas as pd
+import subprocess
+import time
 
-df = pd.read_csv("all_games_preproc.csv")
+def run_node_server():
+    node_process = subprocess.Popen(['node', 'web/server.js'])
 
-pd.to_sql("games", self.conn, if_exist='replace', index_label="gameId")
+    return node_process
+def run_flask_server():
+    node_process = subprocess.Popen(['python3', 'backend/api/app.py'])
+    return flask_process
 
-scraper = Scraper("NHL")
-preprocessor = Preprocessor("NHL")
-scraper.download_nhl_team_data()
-preprocessor.update_csv("all_games_preproc.csv")
-
-query = "SELECT MAX(gameId) FROM games_preproc"
-
-df[df["gameId"].to_numeric() > int(_gameId)]
+if __name__ == "__main__":
+    print("Starting Node.js server...")
+    node_process = run_node_server()
+    flask_process = run_flask_server()
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        node_process.terminate()
+        flask_process.terminate()
