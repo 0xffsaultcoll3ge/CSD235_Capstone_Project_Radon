@@ -21,13 +21,18 @@
         </div>
     </nav>
 
-    <div class="predictions-container">
-        <div class="prediction-box">Prediction 1</div>
-        <div class="prediction-box">Prediction 2</div>
-        <div class="prediction-box">Prediction 3</div>
+    <div class="prediction-container">
+        <select id="home-team">
+            <option value="">Select Home Team</option>
+        </select>
+        <span>vs</span>
+        <select id="away-team">
+            <option value="">Select Away Team</option>
+        </select>
+        <button id="get-prediction">Get Prediction</button>
+        <div id="prediction-result">Prediction will appear here</div>
     </div>
 
     <script src="script.js"></script>
-
 </body>
 </html>
