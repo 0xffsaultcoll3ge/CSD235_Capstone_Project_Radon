@@ -156,7 +156,7 @@ def test_xgboost_nhl_ml():
     X = (X -X.mean())/(X-X.std())
     y = df.loc[:, "winner"]
 
-    gb = RandomForestClassifier()
+    gb = GradientBoostingClassifier()
     gb.fit(X, y)
     # feature_importance = np.mean(np.abs(gnb.theta_), axis=0)
     # important = pd.DataFrame({'Feature': X.columns, 'Importance': gb.feature_importances})
@@ -178,7 +178,7 @@ def test_xgboost_nhl_ml():
     'eval_metric': 'mlogloss',
     'booster': 'gbtree',
     'learning_rate': 0.01,
-    'max_depth': 1,
+    'max_depth': 3,
     'num_class':2,
     'n_estimators': 400
     # 'lambda': 0.2,  # L2 regularization term

@@ -142,27 +142,42 @@ class NHLModel:
         return self.model.predict(X)
     def get_feature_names(self):
         return self.model.feature_names
+    def to_dmatrix(self, match_df: pd.DataFrame):
+        try:
+            features = self.get_feature_names()
+
+            match_df["eloExpectedFor"] = 1 / (1 + 10 ** ((match_df['eloFor'] - match_df['eloAgainst']) / 400))
+            match_df['eloExpectedAgainst'] = 1 - match_df['eloExpectedFor']
+
+            return xgb.DMatrix(match_df[features])
+        except Exception as e:
+            print(e)
+
+    def get_team_prediction(self, home: str, away: str):
+        #replace with DB
+        try:
+            df = pd.read_csv("all_games_preproc.csv")
+            match_df = self.create_match(df, home, away)
+
+            dmat = self.to_dmatrix(match_df)
+
+            return self.predict(dmat)
+        except Exception as e:
+            print(e)
+    
 
 def get_expect_result(p1: float, p2: float) -> float:
     exp = (p2 - p1) / 400.0
     return 1 / ((10.0 ** (exp)) + 1)
 
-def to_dmatrix(match_df: pd.DataFrame, model: NHLModel):
-    features = model.get_feature_names()
-
-    match_df["eloExpectedFor"] = 1 / (1 + 10 ** ((match_df['eloFor'] - match_df['eloAgainst']) / 400))
-    match_df['eloExpectedAgainst'] = 1 - match_df['eloExpectedFor']
-
-    return xgb.DMatrix(match_df[features])
-
 
 if __name__ == "__main__":
-    nhl_model = NHLModel("ml", model_path="./backend/model/models/XGBoot_58.0%_ML.json")
+    nhl_model = NHLModel("ml", model_path="./backend/model/models/XGBoot_57.8%_ML.json")
     df = nhl_model.get_data()
 
-    match_df = nhl_model.create_match(df, "DET", "OTT")
-
-    print(nhl_model.predict(to_dmatrix(match_df, nhl_model)))
+    print(nhl_model.get_team_prediction("PIT", "FLA"))
+    print(type(nhl_model.get_team_prediction("PIT", "BOS")))
+    print(nhl_model.get_team_prediction("OTT", "NYR"))
 
     
     
