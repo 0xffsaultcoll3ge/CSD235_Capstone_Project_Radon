@@ -4,12 +4,13 @@ from sqlalchemy.orm import sessionmaker
 import pandas as pd
 
 app = Flask(__name__)
+nhl_ml_model = NHLModel("ml", model_path="./backend/model/models/XGBoot_58.0%_ML.json")
 
-# DATABASE_URL = "sqlite://nhl.db"
-# engine = create_engine(DATABASE_URL)
+DATABASE_URL = "sqlite://nhl.db"
+engine = create_engine(DATABASE_URL)
 
-# Session = sessionmaker(bind=engine)
-# session = Session()
+Session = sessionmaker(bind=engine)
+session = Session()
 
 @app.route('/api/nhl/ml/predict', methods=['GET'])
 def get_predictions_ml():
@@ -68,16 +69,25 @@ def get_predictions_ou():
 
     return jsonify({"predictions":predictions.tolist()}), 200
 
-@app.route('/api/nhl/team/{id}')
+@app.route('/api/nhl/team')
 def get_team_data():
-    team = dbLayer.get_team_by_id(id)
     try:
-        q = "SELECT * FROM games WHERE team = '{team}'"
-        df = pd.read_sql(q1, engine)
+        team = request.args.get('team')
+        q = "SELECT * FROM games WHERE (team = '{team}' OR opposingTeam = '{team}')"
+        df = pd.read_sql(q, engine)
 
         return df.to_json()
     except Exception as e:
         return jsonify({"error": e})
+@app.route('/api/nhl/odds/{gameId}')
+def get_game_odds():
+    try:
+        q = "SELECT * FROM odds WHERE gameId = '{gameId}'"
+        df = pd.read_sql(q, engine)
+
+        return df.to_json()
+    except Exception as e:
+        return jsonify({"error": e})    
 
 if __name__ == "__main__":
     app.run(debug=True)
