@@ -156,6 +156,7 @@ nav {
     font-weight: bold;
     margin-top: 20px;
     background: linear-gradient(45deg, #E6B400, #F5B800, #FFD700);
+    -webkit-background-clip: text; /* fixed blur with gradient */
     color: transparent;
 }
 
