@@ -1,14 +1,14 @@
 import pandas as pd
 
-df = pd.read_csv("all_teams_1.csv")
+df = pd.read_csv("all_games_preproc.csv")
 
-num = 10
+pd.to_sql("games", self.conn, if_exist='replace', index_label="gameId")
 
-print(type(df[df["gameId"] == 2008020001]))
-print(df[df["gameId"] == 2008020001])
-for row in df.itertuples():
-    if(num > 10):
-        break
-    print(type(row["gameId"]))
-    num += 1
- 
+scraper = Scraper("NHL")
+preprocessor = Preprocessor("NHL")
+scraper.download_nhl_team_data()
+preprocessor.update_csv("all_games_preproc.csv")
+
+query = "SELECT MAX(gameId) FROM games_preproc"
+
+df[df["gameId"].to_numeric() > int(_gameId)]

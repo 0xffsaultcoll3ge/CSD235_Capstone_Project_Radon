@@ -125,7 +125,7 @@ def train_nhl_ml(X, y, params=None):
         acc_results.append(acc)
 
         if acc == max(acc_results):
-            model.save_model('./model/models/XGBoot_{}%_ML.json'.format(acc)) 
+            model.save_model('./backend/model/models/XGBoot_{}%_ML.json'.format(acc)) 
 def test_xgboost_nhl_ml():
     df = pd.read_csv("all_games_preproc.csv", low_memory=False)
     df["gameDate"] = pd.to_datetime(df["gameDate"], format="%Y%m%d")
@@ -150,20 +150,20 @@ def test_xgboost_nhl_ml():
     # df["total_goals"] = df[df["goalsFor"] + df["goalsAgainst"]]
     df["eloExpectedAgainst"] = 1 - df["eloExpectedFor"]
     X = df.loc[:, df.columns.str.contains("ema") 
-    # +df.columns.str.contains('eloExpected') 
+    +df.columns.str.contains('eloExpected') 
     + df.columns.str.contains('daysRest')
     + df.columns.str.contains('winPercentage') ] #+ df.columns.str.contains('eloExpectedFor')
     X = (X -X.mean())/(X-X.std())
     y = df.loc[:, "winner"]
 
-    gb = GradientBoostingClassifier()
+    gb = RandomForestClassifier()
     gb.fit(X, y)
     # feature_importance = np.mean(np.abs(gnb.theta_), axis=0)
     # important = pd.DataFrame({'Feature': X.columns, 'Importance': gb.feature_importances})
     # important.sort_values(by='Importance', ascending=False, inplace=True)
     important = pd.DataFrame({'Feature': X.columns, 'Importance':gb.feature_importances_})
     important.sort_values(by='Importance', ascending=False, inplace=True)
-    top_features = important['Feature'].head(10)
+    top_features = important['Feature'].head(15)
     print(top_features)
     X = X.loc[:, top_features]
 
@@ -176,11 +176,11 @@ def test_xgboost_nhl_ml():
     params = {
     'objective': 'multi:softprob',
     'eval_metric': 'mlogloss',
-    # 'booster': 'gbtree',
-    'learning_rate': 0.015,
-    'max_depth': 5,
+    'booster': 'gbtree',
+    'learning_rate': 0.01,
+    'max_depth': 1,
     'num_class':2,
-    # 'n_estimators':180
+    'n_estimators': 400
     # 'lambda': 0.2,  # L2 regularization term
     # 'alpha': 0.1,  # L1 regularization term
     # 'scale_pos_weight': [1., 2, 3]  # for imbalanced classes
@@ -215,9 +215,6 @@ def test_xgboost_nhl_ml():
     print(f"Training Accuracy: {train_acc * 100:.2f}%")
 
     train_nhl_ml(X, y, params=params)
-# test_xgboost_nhl_ou()
-# test_xgboost_nhl_ml()
-# test_xgboost_nhl_ou()
 
 def test_naive_bayes_nhl_ml():
     df = pd.read_csv("all_games_preproc.csv", low_memory=False)
@@ -245,19 +242,19 @@ def test_naive_bayes_nhl_ml():
     X = (X -X.mean())/(X-X.std())
     y = df.loc[:, "winner"]
 
-    rf = RandomForestClassifier(random_state = 42)
+    rf = GradientBoostingClassifier(random_state = 42)
     rf.fit(X, y)
 
     important = pd.DataFrame({'Feature': X.columns, 'Importance':rf.feature_importances_})
     important.sort_values(by='Importance', ascending=False, inplace=True)
-    top_features = important['Feature'].head(15)
+    top_features = important['Feature'].head(10)
     print(top_features)
     X = X.loc[:, top_features]
 
     params = {
     'objective': 'multi:softprob',
     'eval_metric': 'mlogloss',
-    # 'booster': 'gbtree',
+    'booster': 'gbtree',
     'learning_rate': 0.01,
     'max_depth': 5,
     'num_class':2
@@ -286,7 +283,7 @@ def test_naive_bayes_nhl_ml():
     y_pred = model.predict(X_test)
 
     print(f"Accuracy score: {accuracy_score(y_test, y_pred) * 100}")
-test_naive_bayes_nhl_ml()
+test_xgboost_nhl_ml()
 
 # # Hyperparameters grid to search over
 # param_grid = {
