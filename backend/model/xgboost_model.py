@@ -105,7 +105,7 @@ def train_nhl_ml(X, y, params=None):
         test = xgb.DMatrix(X_test, label=y_test)
 
         params = params if params else {
-            'max_depth': 5,
+            'max_depth': 3,
             'eta': 0.015,
             # 'n_estimators': 180,
             'objective':'multi:softprob',
@@ -153,10 +153,10 @@ def test_xgboost_nhl_ml():
     +df.columns.str.contains('eloExpected') 
     + df.columns.str.contains('daysRest')
     + df.columns.str.contains('winPercentage') ] #+ df.columns.str.contains('eloExpectedFor')
-    X = (X -X.mean())/(X-X.std())
+    # X = (X -X.mean())/(X-X.std())
     y = df.loc[:, "winner"]
 
-    gb = GradientBoostingClassifier()
+    gb = RandomForestClassifier()
     gb.fit(X, y)
     # feature_importance = np.mean(np.abs(gnb.theta_), axis=0)
     # important = pd.DataFrame({'Feature': X.columns, 'Importance': gb.feature_importances})

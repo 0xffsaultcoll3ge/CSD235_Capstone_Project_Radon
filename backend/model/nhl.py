@@ -146,8 +146,11 @@ class NHLModel:
         try:
             features = self.get_feature_names()
 
-            match_df["eloExpectedFor"] = 1 / (1 + 10 ** ((match_df['eloFor'] - match_df['eloAgainst']) / 400))
+            match_df["eloExpectedFor"] = 1 / (1 + 10 ** ((match_df['eloAgainst'] - match_df['eloFor']) / 400))
             match_df['eloExpectedAgainst'] = 1 - match_df['eloExpectedFor']
+
+            print(match_df["eloExpectedFor"])
+            print(match_df["eloExpectedFor"])
 
             return xgb.DMatrix(match_df[features])
         except Exception as e:

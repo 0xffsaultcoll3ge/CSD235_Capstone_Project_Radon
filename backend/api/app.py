@@ -7,7 +7,7 @@ sys.path.insert(1, './backend/model')
 from nhl import NHLModel
 
 app = Flask(__name__)
-nhl_ml_model = NHLModel("ml", model_path="./backend/model/models/XGBoot_58.0%_ML.json")
+nhl_ml_model = NHLModel("ml", model_path="./backend/model/models/XGBoot_57.7%_ML.json")
 
 # DATABASE_URL = "sqlite:///nhl.db"
 # engine = create_engine(DATABASE_URL)
