@@ -1,21 +1,18 @@
-/* About Page Specific Styles */
-
-/* Main container that holds the two columns */
+/* About Page */
 .about-container {
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    gap: 50px;               /* Space between the two columns */
+    gap: 50px;              
     padding: 50px;
     color: white;
 }
 
-/* Left column: About text */
 .about-left {
     flex: 2;
 }
 
-/* Style for the subheading with a gold gradient */
+/* style for the subheading with a gold gradient */
 .about-left h2 {
     font-size: 2.5rem;
     margin-bottom: 20px;
@@ -24,18 +21,18 @@
     color: transparent;
 }
 
-/* Paragraph styling for readability */
+/*  styling for readability for the paragraph */
 .about-left p {
     font-size: 1.2rem;
     line-height: 1.6;
 }
 
-/* Right column: Contact information */
+/* contact info to the right */
 .about-right {
     flex: 1;
 }
 
-/* Heading for contact info with a similar gold gradient */
+/* gold gradient for the heading */
 .about-right h3 {
     font-size: 2rem;
     margin-bottom: 20px;
@@ -44,7 +41,7 @@
     color: transparent;
 }
 
-/* Remove default list styling and add spacing */
+/* removed default list styling and add spacing */
 .about-right ul {
     list-style: none;
     padding: 0;
@@ -55,23 +52,19 @@
     margin-bottom: 10px;
 }
 
-/* NHL Banner Section */
-/* This section displays a banner image of the NHL at the bottom of the page */
-/* NHL Banner Section */
-/* This section displays an NHL banner image at the bottom of the page,
-   with a background that matches the overall page background (#121826). */
+/* NHL banner section */
    .nhl-banner {
     width: 100%;
     text-align: center;
     margin-top: 40px;
     padding: 20px 0;
-    background-color: #121826; /* Set background to the same as the page */
+    background-color: #121826; 
 }
 
 .nhl-banner img {
     width: 100%;
-    max-width: 1200px; /* Control the banner's maximum width */
-    height: auto;      /* Maintain the image's aspect ratio */
+    max-width: 1200px; 
+    height: auto;      
     display: block;
     margin: 0 auto;
 }
