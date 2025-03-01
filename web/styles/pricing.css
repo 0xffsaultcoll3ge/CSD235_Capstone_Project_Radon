@@ -1,0 +1,62 @@
+/* Pricing Page Specific Styles */
+
+/* Center the pricing section within the viewport */
+.pricing-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 50px 0;
+  }
+  
+  /* Style the pricing box that contains the details */
+  .pricing-box {
+    background-color: #1A1F2E;         /* Dark background matching your theme */
+    border-radius: 10px;               /* Rounded corners */
+    padding: 30px;                     /* Inner spacing */
+    max-width: 600px;                  /* Maximum width for readability */
+    width: 90%;                        /* Responsive width */
+    text-align: center;                /* Center the text */
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3); /* Subtle shadow for depth */
+  }
+  
+  /* Pricing box title styling */
+  .pricing-box h2 {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    color: #FFD700; /* Gold color for a premium feel */
+  }
+  
+  /* Features list styling */
+  .pricing-box .features {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    color: white;
+  }
+  
+  /* Price styling */
+  .pricing-box .price {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 30px;
+    color: #FFD700;
+  }
+  
+  /* Subscribe button styling */
+  .subscribe-button {
+    padding: 15px 30px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #121826; /* Dark text for contrast */
+    background: linear-gradient(45deg, #E6B400, #F5B800, #FFD700); /* Gold gradient background */
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  /* Hover effect for the subscribe button */
+  .subscribe-button:hover {
+    transform: translateY(-3px);
+    background: linear-gradient(45deg, #FFD700, #F5B800, #E6B400);
+  }
+  
