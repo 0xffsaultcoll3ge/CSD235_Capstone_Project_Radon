@@ -10,7 +10,7 @@ const PORT = 3000;
 app.use(cors());
 
 // serves the html pages
-app.use(express.static(__dirname));
+app.use(express.static(path.join(__dirname, '..')));
 
 // get endpoint for the api (proxy between frontend and the API)
 app.get('/api/nhl/ml/predict', (req, res) => {
