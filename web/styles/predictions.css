@@ -1,0 +1,56 @@
+/* Predictions Page */
+
+/* centers everything and stacks vertically */
+.prediction-container {
+    display: flex;
+    flex-direction: column;         
+    align-items: center;            
+    justify-content: center;        
+    height: calc(100vh - 80px);     
+    text-align: center;
+    margin-top: 20px;
+}
+
+/* vs between dropdown menus */
+.prediction-container span {
+    font-size: 1.2rem;
+    margin: 0 10px;
+    color: white;
+}
+
+/* dropdown menus */
+.prediction-container select {
+    padding: 10px 15px;
+    font-size: 1rem;
+    border: 2px solid #FFD700;               
+    border-radius: 5px;
+    background-color: #1A1F2E;              
+    color: white;
+    margin: 10px;             
+    appearance: none;
+}
+
+.prediction-container button {
+    padding: 10px 20px;
+    font-size: 1rem;
+    font-weight: bold;
+    background: linear-gradient(45deg, #E6B400, #F5B800, #FFD700); 
+    border: none;
+    border-radius: 5px;
+    color: #121826;                        
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+.prediction-container button:hover {
+    transform: translateY(-3px);
+}
+
+#prediction-result {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-top: 20px;
+    background: linear-gradient(45deg, #E6B400, #F5B800, #FFD700);
+    -webkit-background-clip: text; /* fixed blur with gradient */
+    color: transparent;
+}
