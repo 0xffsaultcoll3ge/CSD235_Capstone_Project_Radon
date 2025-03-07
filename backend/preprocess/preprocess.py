@@ -16,11 +16,11 @@ from skopt.utils import use_named_args
 
 warnings.filterwarnings("ignore")
 
-def calculate_seasonal_ema(df, col, shift=1):
+def calculate_seasonal_ema(df, col, span=5):
     ema_column = [np.nan] * len(df)
     if(df[col].dtype != np.float64):
         raise Exception(f"Error occurred calculating seasonal EMA for {col}")
-    ema_vals = df[col].ewm(span=5, adjust=False).mean()
+    ema_vals = df[col].ewm(span=span, adjust=False).mean()
     shifted_vals = ema_vals.shift()
     for i in range(0, len(df)):
         ema_val = shifted_vals.iloc[i]
@@ -33,18 +33,11 @@ def get_float_features(df):
         if(df[feat].dtype == np.float64):
             feats.append(feat)
     return feats
-def nhl_team_names():
-    team_names = []
-    try:
-        with open('./team_files', 'r') as f:
-            team_names = [l.strip('\n') for l in f.readlines()]
-    except:
-        return Error("Failed to read NHL team file")
-    return team_names
+
 def download_file(url, sport, subject, gametype, path=None):
     if path == None:
-        _dir = "./data/{0}/{1}/{2}".format(sport, subject, gametype)
-        path = "./data/{0}/{1}/{2}/{3}".format(sport, subject, gametype, url.split("/")[-1])
+        _dir = "./backend/data/{0}/{1}/{2}".format(sport, subject, gametype)
+        path = "./backend/data/{0}/{1}/{2}/{3}".format(sport, subject, gametype, url.split("/")[-1])
     try:
         r = requests.get(url)
         if r.status_code == 404:
@@ -58,7 +51,6 @@ def download_file(url, sport, subject, gametype, path=None):
                     f.write(chunk)
     except:
         print("Downloading {0} failed...".foramt(url))
-
 class Scraper:
     def __init__(self, sport):
         self.sport = sport
@@ -68,7 +60,14 @@ class Scraper:
 
     def download_nhl_team_data(regular=True, playoff=True):
         try:
-            nhl_teams = nhl_team_names()
+            def get_teams():
+                teams = []
+                with open('./team_files', 'r') as f:
+                    lines = f.readlines()
+                    for l in lines:
+                        teams.append(l.strip())
+                return teams
+            nhl_teams = get_teams()
             regular_base_url = "https://moneypuck.com/moneypuck/playerData/careers/gameByGame/regular/teams/"
             playoff_base_url = "https://moneypuck.com/moneypuck/playerData/careers/gameByGame/playoffs/teams/"
 
@@ -88,21 +87,20 @@ class Scraper:
                     t1.join()
                 if t2 != None:
                     t2.join()
-        except:
+        except Exception as e:
+            print(e)
             raise Exception("Error occurred downloading team data ...")
 
             return True
+
 class Preprocessor:
     def __init__(self, sport):
         self.sport = sport
-        self.sports = ["NHL"]
-        if self.sport not in self.sports:
-            raise Exception("Error during instantiation, invalid sport: {0}".format(sport))
         self.data = None
         self.data_list = []
         self.ema_data = None
         self.preproc_data = None
-        self.data_path = "./data"
+        self.data_path = "./backend/data"
         self.subject = "teams"
         # self.scraper = Scraper(sport)
     def normalize(self, df):
@@ -122,17 +120,28 @@ class Preprocessor:
         return df_list
     def clean_dataframe(self, df):
         if self.sport == "NHL" and self.subject == "teams":
-            df["winner"] = np.where(df["goalsFor"] > df["goalsAgainst"], 1.0, 0.0)
             df = df[df["situation"] == "all"]
-            df = df.loc[:, ~df.columns.str.contains("Against")]
+            df["winner"] = np.where(df["goalsFor"] > df["goalsAgainst"], 1.0, 0.0)
+            df["goalDiffFor"] = df["goalsFor"] - df["goalsAgainst"]
+            df["winRateFor"] = df.groupby("season")["winner"].transform(lambda x: x.expanding().mean())
+            #http://article.sapub.org/10.5923.j.sports.20140403.02.html
+            df["goalsForPerGame"] = df.groupby("season")["goalsFor"].transform(lambda x: x.expanding().mean())
+            df["goalsAgainstPerGame"] = df.groupby("season")["goalsAgainst"].transform(lambda x: x.expanding().mean())
+            df["ryderExpFor"] = (df["goalsForPerGame"] + df["goalsAgainstPerGame"]).pow(0.458)
+            df["ryderProbFor"] = df["goalsFor"].pow(df["ryderExpFor"])/(df["goalsFor"].pow(df["ryderExpFor"]) + df["goalsAgainst"].pow(df["ryderExpFor"]))
+            df.columns = df.columns.str.replace(r'Against', 'OpponentFor', regex=True)
             return df
         else:
             return None
-
     def ema_df(self, df):
         if self.sport == "NHL" and self.subject == "teams":
             for col in get_float_features(df):
-                df[f"{col}_seasonal_ema"] = calculate_seasonal_ema(df, col)
+                df[f"{col}_seasonal_ema_span_5"] = calculate_seasonal_ema(df, col, span=5)
+                df[f"{col}_seasonal_ema_span_8"] = calculate_seasonal_ema(df, col, span=8)
+                df[f"{col}_seasonal_ema_span_13"] = calculate_seasonal_ema(df, col, span=13)
+                df[f"{col}_seasonal_ema_span_21"] = calculate_seasonal_ema(df, col, span=21)
+                df[f"{col}_seasonal_ema_span_34"] = calculate_seasonal_ema(df, col, span=34)
+                df[f"{col}_seasonal_ema_span_55"] = calculate_seasonal_ema(df, col, span=55)
             return df
         else:
             return None
@@ -144,7 +153,6 @@ class Preprocessor:
         return pd.concat([df, df1.drop(df.columns, axis=1)], axis=1).sort_values(by="gameId")
     def apply_seasonal_ema(self, df, groupby_col='season', value_col='score', id_col='gameId'):
         df1 = df.groupby(groupby_col, group_keys=False).apply(lambda x: self.ema_df(x.sort_values(by="gameId"))).sort_values(by="gameId")
-
         return pd.concat([df, df1.drop(df.columns, axis=1)], axis=1).sort_values(by='gameId')
 
     def get_prev_elo(self, df, i, team):
@@ -191,7 +199,7 @@ class Preprocessor:
 
         if not optimized:
 
-            space = [Real(10, 100, name="K"), Real(0, 400, name="decay")]
+            space = [Real(10, 300, name="K"), Real(0, 400, name="decay")]
 
             @use_named_args(space)
             def objective(K, decay):
@@ -302,67 +310,9 @@ class Preprocessor:
 
 if __name__ == "__main__":  
     preproc = Preprocessor("NHL")
+    scraper = Scraper("NHL")
+    # scraper.download_nhl_team_data()
     preproc.update_csv("all_games_preproc.csv")
-    # scraper = Scraper("NHL")
-    # preproc.data_list = preproc.dataframe_list("teams")
-    # preproc.data_list = [preproc.clean_dataframe(df) for df in preproc.data_list]
-
-    # data_map = {}
-    # for df in preproc.data_list:
-    #     team = df["team"].iloc[1]
-    #     if team in data_map:
-    #         data_map[team] = pd.concat([data_map[team], df], ignore_index=True).sort_values(by="gameId")
-    #     else:
-    #         data_map[team] = df.copy()
-    # new_data_map = {}
-    # for k,v in data_map.items():
-    #     new_data_map[k] = preproc.apply_seasonal_ema(v)
-    # data_map = new_data_map.copy()
-    # for k, v in new_data_map.items():
-    #     new_data_map[k] = preproc.create_team_matches(new_data_map[k], data_map)
-    # team_df = preproc.concat_team_dataframes(new_data_map)
-    # team_df = team_df.loc[:, ~team_df.columns.str.contains('^Unnamed')]
-    # team_df = preproc.apply_elo_rating(team_df, K=32, decay=0.01)
-    # team_df.to_csv("all_games_preproc.csv")
-
-
-
-# scraper.download_nhl_team_data()
-
-
-            
-
-
-
-            
-            
-            
-
-
-
-
-
-    
-
-
-    
-
-
-
-            
-
-
-
-            
-
-
-
-
-
-    
-    
-            
-
 
 
     

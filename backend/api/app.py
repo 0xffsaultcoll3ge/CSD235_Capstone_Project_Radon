@@ -7,8 +7,9 @@ sys.path.insert(1, './backend/model')
 from nhl import NHLModel
 
 app = Flask(__name__)
-nhl_ml_model = NHLModel("ml", model_path="./backend/model/models/XGBoot_57.7%_ML.json")
-
+nhl_ml_model = NHLModel("ml", model_path="./backend/model/models/XGBoot_60.2%_ML.json")
+nhl_ou_model = NHLModel("ou", model_path="./backend/model/models/OU/XGBoot_64.3%_OU_6.0.json")
+nhl_spread_model = NHLModel("spread", model_path="./backend/model/models/spread/XGBoot_76.5%_Spread_-1.5.json")
 # DATABASE_URL = "sqlite:///nhl.db"
 # engine = create_engine(DATABASE_URL)
 
@@ -30,31 +31,27 @@ def get_predictions_ml():
 @app.route('/api/nhl/ou/predict', methods=['GET'])
 def get_predictions_ou():
     try: 
-        team1 = request.args.get('home')
-        team2 = request.args.get('away')
+        home = request.args.get('home')
+        away = request.args.get('away')
 
-        q1 = f"""
-        SELECT * FROM games_preproc WHERE (team = '{home}' OR opposingTeam = '{away}') ORDER BY gameId DESC LIMIT 1
-        """
-        q2 = f"""
-        SELECT * FROM games_preproc WHERE (team = '{home}' OR opposingTeam = '{away}') ORDER BY gameId DESC LIMIT 1
-        """
-
-        df1 = pd.read_sql(q1, engine)
-        df2 = pd.read_sql(q2, engine)
-        _match = create_match(df1, df2) #asssume this method exists
-
-        model = xgb.Booster()
-        model.load_model(ou_model_path)
-
-        dmatrix = xgb.DMatrix(_match)
-
-        predictions = model.predict(dmatrix)
+        predictions = nhl_ou_model.get_team_prediction(home, away)
+        return jsonify({"predictions":predictions.tolist()}), 200
     except Exception as e:
         return jsonify({"error":str(e)}), 500
 
     return jsonify({"predictions":predictions.tolist()}), 200
+@app.route('/api/nhl/spread/predict', methods=['GET'])
+def get_predictions_spread():
+    try:
+        home = request.args.get('home')
+        away = request.args.get('away')
 
+        predictions = nhl_spread_model.get_team_prediction(home, away)
+        return jsonify({"predictions":predictions.tolist()}), 200
+    except Exception as e:
+        return jsonify({"error":str(e)}), 500
+
+    return jsonify({"predictions":predictions.tolist()}), 200
 @app.route('/api/nhl/team')
 def get_team_data():
     try:

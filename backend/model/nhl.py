@@ -1,8 +1,33 @@
 import xgboost as xgb
 import pandas as pd
+import re
 import sys
 sys.path.insert(1, './backend/preprocess')
 import elo
+import pandas as pd
+
+
+def update_seasonal_ema(df: pd.DataFrame):
+    ema_columns = [col for col in df.columns if re.match(r'.*_seasonal_ema_span_\d+', col)]
+    
+    if not ema_columns:
+        raise ValueError("No 'feat_seasonal_ema_span_*' columns found in the DataFrame.")
+    
+    for ema_column in ema_columns:
+        match = re.match(r'(.+)_seasonal_ema_span_(\d+)', ema_column)
+        if match:
+            feat = match.group(1)
+            span = int(match.group(2))
+            
+            alpha = 2 / (span + 1)
+            
+            df[ema_column] = df[feat].copy()
+            
+            for i in range(1, len(df)):
+                df.loc[i, ema_column] = alpha * df.loc[i, feat] + (1 - alpha) * df.loc[i - 1, ema_column]
+    
+    return df
+
 
 
 class NHLModel:
@@ -44,7 +69,7 @@ class NHLModel:
                             df.columns.str.contains('winPercentage')]
 
             X = df[feature_cols]
-            X = (X - X.mean()) / X.std()  # Standardize features
+            X = (X - X.mean()) / X.std()
             y = df["winner"]
 
             return X, y
@@ -60,11 +85,8 @@ class NHLModel:
         away_status = "home" if away_df.iloc[0]["team"] == away else "away"
 
         # Update EMAs
-        for col in home_df.columns:
-            if 'ema' in col:
-                base_col = col.replace("_seasonal_ema", "")
-                home_df[col] = home_df[col] * (1 / 3) + (2 / 3) * home_df[base_col]
-                away_df[col] = away_df[col] * (1 / 3) + (2 / 3) * away_df[base_col]
+        home_df = update_seasonal_ema(home_df)
+        away_df = update_seasonal_ema(away_df)
 
         # Update Elo ratings
         self.update_elo_ratings(home_df, away_df, home_status, away_status)
@@ -85,7 +107,7 @@ class NHLModel:
         return pd.DataFrame(ret).T
 
     def update_elo_ratings(self, home_df, away_df, home_status, away_status):
-        elo_scorer = elo.Elo(100, 0.01)
+        elo_scorer = elo.Elo(297.74135219445316, 0.01)
 
         # Set initial Elo ratings
         teams = {
@@ -181,31 +203,3 @@ if __name__ == "__main__":
     print(nhl_model.get_team_prediction("PIT", "FLA"))
     print(type(nhl_model.get_team_prediction("PIT", "BOS")))
     print(nhl_model.get_team_prediction("OTT", "NYR"))
-
-    
-    
-
-    
-
-
-
-                
-            
-
-
-
-
-
-
-
-
-
-        
-
-
-
-
-        
-
-
-  
