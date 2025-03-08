@@ -101,11 +101,19 @@ class Preprocessor:
         self.ema_data = None
         self.preproc_data = None
         self.data_path = "./backend/data"
+        self.nhl_team_map = {}
         self.subject = "teams"
         # self.scraper = Scraper(sport)
     def normalize(self, df):
         assert(~df.isnumeric())
         return (df -df.mean())/df.std()
+    def team_frame_list(self):
+        try:
+            for k,v in self.nhl_team_map.items():
+                df = pd.read_sql(table_name, con=self.engine)
+                self.data_list.append(df)
+        except Exception as e:
+            print(e)
     def dataframe_list(self, subject):
         path = self.data_path
         df_list = []
@@ -307,6 +315,7 @@ class Preprocessor:
         team_df = team_df.loc[:, ~team_df.columns.str.contains('^Unnamed')]
         team_df = self.apply_elo_rating(team_df, K=32, decay=0.01)
         team_df.to_csv(filepath)
+        #write to database when finished, change function name
 
 if __name__ == "__main__":  
     preproc = Preprocessor("NHL")

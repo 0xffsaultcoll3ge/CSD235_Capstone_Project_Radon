@@ -415,7 +415,7 @@ def train_nhl_ml(X, y, params=None):
         acc_results.append(acc)
 
         if acc == max(acc_results):
-            model.save_model('./backend/model/models/XGBoot_{}%_ML.json'.format(acc))
+            model.save_model('./backend/model/models/ML/XGBoot_{}%_ML.json'.format(acc))
 def tune_xgboost_nhl_ml():
     df = pd.read_csv("all_games_preproc.csv", low_memory=False)
     df["gameDate"] = pd.to_datetime(df["gameDate"], format="%Y%m%d")

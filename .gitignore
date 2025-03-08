@@ -3,6 +3,10 @@ tmp
 tmp.py
 *.profraw
 capstone/*
-all_teams_preproc.csv
 .env
 cap/*
+nhl.db
+data/NHL/teams/*
+cap/*
+all_games_preproc.csv
+

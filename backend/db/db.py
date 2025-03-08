@@ -36,7 +36,7 @@ class NHLPipeline:
         self.engine = create_engine(db_uri)
         Session = sessionmaker(bind=self.engine)
         self.session = Session()
-        # self.preprocessor = Preprocessor("NHL")
+        self.preprocessor = Preprocessor("NHL")
         # self.scraper = Scraper("NHL")
     def download_team_csv(self, team_name: str, game_type="regular", path=None):
         regular_base_url = f"https://moneypuck.com/moneypuck/playerData/careers/gameByGame/{game_type}/teams/{team_name}.csv"
@@ -67,8 +67,13 @@ class NHLPipeline:
             try:
                 self.update_team_table(team, table)
             except Exception as e:
-                print(f"An error occurred while trying to update table {table}: {ee}")
-
+                print(f"An error occurred while trying to update table {table}: {e}")
+    def team_table_to_frame(self, table_name: str):
+        try:
+            return pd.read_sql(table_name, con=self.engine)
+        except Exception as e:
+            print(e)
+            return None
         
     def write_to_table(self, df: pd.DataFrame, table_name: str):
         try:
