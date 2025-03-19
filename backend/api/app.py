@@ -8,8 +8,8 @@ from nhl import NHLModel, best_model_path
 
 app = Flask(__name__)
 nhl_ml_model = NHLModel("ml", model_path="./backend/model/models/ML/XGBoot_60.1%_ML.json")
-nhl_ou_model = lambda ou: return NHLModel("ou", model_path = best_model_path("ou", "./backend/model/models/ou", ou) )
-nhl_spread_model = lambda spread: return NHLModel("spread", model_path = best_model_path("spread", "./backend/model/models/spread", spread))
+nhl_ou_model = lambda ou: NHLModel("ou", model_path = best_model_path("ou", "./backend/model/models/ou", ou) )
+nhl_spread_model = lambda spread: NHLModel("spread", model_path = best_model_path("spread", "./backend/model/models/spread", spread))
 # DATABASE_URL = "sqlite:///nhl.db"
 # engine = create_engine(DATABASE_URL)
 
