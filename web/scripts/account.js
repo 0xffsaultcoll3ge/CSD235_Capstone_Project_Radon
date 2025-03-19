@@ -1,44 +1,40 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // account icon that opens the dropdown menu (for raghav so he knows what each element is)
     const accountIcon = document.getElementById("accountIcon");
-    // dropdown menu containing login, register, and account details (for raghav so he knows what each element is)
     const accountDropdown = document.getElementById("accountDropdown");
-    // input field for login email (for raghav so he knows what each element is)
     const loginEmail = document.getElementById("loginEmail");
-    // input field for login password (for raghav so he knows what each element is)
     const loginPassword = document.getElementById("loginPassword");
-    // input field for registration email (for raghav so he knows what each element is)
+    const registerFirstName = document.getElementById("registerFirstName"); 
+    const registerLastName = document.getElementById("registerLastName");    
     const registerEmail = document.getElementById("registerEmail");
-    // input field for registration password (for raghav so he knows what each element is)
     const registerPassword = document.getElementById("registerPassword");
-    // displays the currently logged-in user's email or "Account" (for raghav so he knows what each element is)
     const userDisplay = document.getElementById("userDisplay");
-    // container for login form elements (for raghav so he knows what each element is)
     const authForms = document.getElementById("authForms");
-    // container for registration form elements (for raghav so he knows what each element is)
     const registerForm = document.getElementById("registerForm");
-    // logout button, only visible when a user is logged in (for raghav so he knows what each element is)
     const logoutButton = document.getElementById("logoutButton");
-    // displays the subscription status of the logged-in user (for raghav so he knows what each element is)
     const subscriptionStatus = document.getElementById("subscriptionStatus");
 
-    // persistent test account (always exists)
-    let testAccount = { password: "test", subscribed: true };
+    // test account 
+    let testAccount = {
+        first_name: "Test",
+        last_name: "User",
+        email: "test@test.com",
+        password_hash: "test",
+        is_subscribed: true
+    };
+
     let savedTestAccount = JSON.parse(localStorage.getItem("testAccount"));
 
-    // ensures the test account always exists in localStorage
-    if (!savedTestAccount || savedTestAccount.password !== "test") {
+    // makes sure the test account exists 
+    if (!savedTestAccount || savedTestAccount.password_hash !== "test") {
         localStorage.setItem("testAccount", JSON.stringify(testAccount));
     }
 
-    // users only exist in sessionStorage (cleared on restart)
+    // users only exist in session storage
     let users = JSON.parse(sessionStorage.getItem("users")) || {};
-
-    // ensures the test account is always available in sessionStorage
-    users["test@test.com"] = JSON.parse(localStorage.getItem("testAccount"));
+    users["test@test.com"] = JSON.parse(localStorage.getItem("testAccount")); 
     sessionStorage.setItem("users", JSON.stringify(users));
 
-    // stores the currently logged-in user, or null if no user is logged in
+    // stores the currently logged in user
     let currentUser = sessionStorage.getItem("currentUser") || null;
 
     /**
@@ -66,10 +62,10 @@ document.addEventListener("DOMContentLoaded", () => {
         users = JSON.parse(sessionStorage.getItem("users"));
 
         if (currentUser && users[currentUser]) {
-            userDisplay.innerText = `Logged in as: ${currentUser}`;
+            userDisplay.innerText = `Logged in as: ${users[currentUser].first_name} ${users[currentUser].last_name}`;
             authForms.style.display = "none";
             registerForm.style.display = "none";
-            subscriptionStatus.innerText = `Subscription: ${users[currentUser].subscribed ? "Yes" : "No"}`;
+            subscriptionStatus.innerText = `Subscription: ${users[currentUser].is_subscribed ? "Yes" : "No"}`;
             subscriptionStatus.style.display = "block";
             logoutButton.style.display = "block";
         } else {
@@ -96,7 +92,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        if (users[email] && users[email].password === password) {
+        if (users[email] && users[email].password_hash === password) {  
             currentUser = email;
             sessionStorage.setItem("currentUser", email);
             updateAccountUI();
@@ -110,10 +106,12 @@ document.addEventListener("DOMContentLoaded", () => {
      */
     window.handleRegister = function () {
         users = JSON.parse(sessionStorage.getItem("users"));
+        const firstName = registerFirstName.value.trim();  
+        const lastName = registerLastName.value.trim();    
         const email = registerEmail.value.trim();
         const password = registerPassword.value.trim();
 
-        if (!email || !password) {
+        if (!firstName || !lastName || !email || !password) { 
             alert("Please fill in all fields.");
             return;
         }
@@ -123,7 +121,15 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        users[email] = { password, subscribed: false };
+        // stores the user with proper database fields
+        users[email] = {
+            first_name: firstName,
+            last_name: lastName,
+            email: email,
+            password_hash: password,  
+            is_subscribed: false  // default is false
+        };
+
         sessionStorage.setItem("users", JSON.stringify(users));
         alert("Registration successful. Please log in.");
         registerForm.style.display = "none";
@@ -131,7 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     /**
-     * Handles user logout
+     * handles user logout
      */
     window.handleLogout = function () {
         currentUser = null;

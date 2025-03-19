@@ -1,11 +1,11 @@
-// BLOCK PAGE FROM LOADING UNTIL CHECK IS DONE
+// blocks the page from loading until the check is done.
 if (!sessionStorage.getItem("currentUser")) {
     window.location.href = "pricing.html";
 } else {
     let users = JSON.parse(sessionStorage.getItem("users")) || {};
     let currentUser = sessionStorage.getItem("currentUser");
 
-    if (!users[currentUser]?.subscribed) {
+    if (!users[currentUser]?.is_subscribed) {
         alert("You need a subscription to view this page.");
         window.location.href = "pricing.html";
     } else {
