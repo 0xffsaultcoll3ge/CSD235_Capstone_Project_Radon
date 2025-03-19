@@ -13,6 +13,15 @@ def get_table_csv(table_name, csv_map, update=False) -> pd.DataFrame:
         scraper.download_nhl_team_data()
         preproc.update_csv(fpath)
     return pd.read_csv(fpath)
+def create_table_map(tables, teams=None):
+    mp = {}
+    if teams == None:
+        with open('team_files', 'r') as f:
+            teams = [l.strip() for l in f.readlines()]
+    for team in teams:
+        mp[team] = team.lower()
+    return mp
+
 def download_file(url, subject, gametype, path=None):
     if path == None:
         _dir = "./backend/data/NHL/{1}/{2}".format(subject, gametype)
@@ -36,7 +45,7 @@ class NHLPipeline:
         self.engine = create_engine(db_uri)
         Session = sessionmaker(bind=self.engine)
         self.session = Session()
-        self.preprocessor = Preprocessor("NHL")
+        self.preproc = Preprocessor("NHL")
         # self.scraper = Scraper("NHL")
     def download_team_csv(self, team_name: str, game_type="regular", path=None):
         regular_base_url = f"https://moneypuck.com/moneypuck/playerData/careers/gameByGame/{game_type}/teams/{team_name}.csv"
@@ -68,6 +77,13 @@ class NHLPipeline:
                 self.update_team_table(team, table)
             except Exception as e:
                 print(f"An error occurred while trying to update table {table}: {e}")
+    def preprocess_team_data(self, preproc_table: str):
+        try:
+            team_df = preproc.update_csv()
+            df.to_sql(preproc_table, con=self.engine, if_exists="append", index=False)
+        except Exception as e:
+            print(e)
+
     def team_table_to_frame(self, table_name: str):
         try:
             return pd.read_sql(table_name, con=self.engine)

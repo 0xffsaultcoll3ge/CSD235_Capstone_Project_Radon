@@ -28,6 +28,25 @@ def update_seasonal_ema(df: pd.DataFrame):
     
     return df
 
+def best_model_path(event: str, model_dir: str, threshold = None) -> str:
+    d = None
+    try:
+        if event not in ["ou", "spread"]:
+            d = os.path.join(model_dir, event)
+        else:
+            assert(threshold != None)
+            d = os.path.join(model_dir, event, threshold)
+        max_acc = -1
+        best_model = None
+        for model in d:
+            acc = float(re.find(r'(\d+(\.\d+)?%)'))
+            if acc > max_acc:
+                max_acc = acc
+                best_model = model
+        return model
+    except Exception as e:
+        print(e)
+
 
 
 class NHLModel:
@@ -107,7 +126,7 @@ class NHLModel:
         return pd.DataFrame(ret).T
 
     def update_elo_ratings(self, home_df, away_df, home_status, away_status):
-        elo_scorer = elo.Elo(297.74135219445316, 0.01)
+        elo_scorer = elo.Elo(50, 0.01)
 
         # Set initial Elo ratings
         teams = {
@@ -189,6 +208,12 @@ class NHLModel:
             return self.predict(dmat)
         except Exception as e:
             print(e)
+    def kelly_criterion_result(self):
+        return None
+    def kelly_fraction(p: float, a: float, b: float) -> float:
+        q = 1 - p
+        return p / a - q / b
+
     
 
 def get_expect_result(p1: float, p2: float) -> float:

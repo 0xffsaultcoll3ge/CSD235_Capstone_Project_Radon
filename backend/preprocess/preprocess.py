@@ -207,7 +207,7 @@ class Preprocessor:
 
         if not optimized:
 
-            space = [Real(10, 300, name="K"), Real(0, 400, name="decay")]
+            space = [Real(10, 50, name="K"), Real(0, 400, name="decay")]
 
             @use_named_args(space)
             def objective(K, decay):
@@ -320,7 +320,7 @@ class Preprocessor:
 if __name__ == "__main__":  
     preproc = Preprocessor("NHL")
     scraper = Scraper("NHL")
-    # scraper.download_nhl_team_data()
+    scraper.download_nhl_team_data()
     preproc.update_csv("all_games_preproc.csv")
 
 
