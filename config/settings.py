@@ -13,3 +13,5 @@ class Settings:
     
     #PATHS
     DATA_DIR = os.getenv("DATA_DIR")
+
+    STRIPE_API_KEY = os.getenv("STRIPE_API_KEY")

@@ -1,9 +1,9 @@
-import keras
-import tensorflow as tf
-from keras.models import Sequential
-from keras.layers import Dense
-from tensorflow.keras import layers, regularizers
-from tensorflow.keras.callbacks import EarlyStopping
+#import keras
+#import tensorflow as tf
+#from keras.models import Sequential
+#from keras.layers import Dense
+# from tensorflow.keras import layers, regularizers
+# from tensorflow.keras.callbacks import EarlyStopping
 
 from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score, RandomizedSearchCV
@@ -28,84 +28,85 @@ from sklearn.base import BaseEstimator, ClassifierMixin
 from tqdm import tqdm
 import warnings
 import sys
+import os
 
 warnings.filterwarnings('ignore')
 
-def test_nn_nhl_ml():
-    df = pd.read_csv("all_games_preproc.csv", low_memory=False)
-    df["gameDate"] = pd.to_datetime(df["gameDate"], format="%Y%m%d")
-    df["lastGameFor"] = df.groupby(df["team"])["gameDate"].shift()
-    df["lastGameAgainst"] = df.groupby(df["opposingTeam"])["gameDate"].shift()
-    df["daysRestFor"] = (df["gameDate"] - df["lastGameFor"]).dt.days
-    df["daysRestAgainst"] = (df["gameDate"] - df["lastGameAgainst"]).dt.days
-    df = df.dropna(axis=0)
-    # goal_cols = []
-    # for col in df.columns:
-    #     if "goal" in col or "GoalsFor" in col:
-    #         goal_cols.append(col)
-    # df.drop(goal_cols, axis = 1, inplace=True)
-    # df = df.fillna(0)
+# def test_nn_nhl_ml():
+#     df = pd.read_csv("all_games_preproc.csv", low_memory=False)
+#     df["gameDate"] = pd.to_datetime(df["gameDate"], format="%Y%m%d")
+#     df["lastGameFor"] = df.groupby(df["team"])["gameDate"].shift()
+#     df["lastGameAgainst"] = df.groupby(df["opposingTeam"])["gameDate"].shift()
+#     df["daysRestFor"] = (df["gameDate"] - df["lastGameFor"]).dt.days
+#     df["daysRestAgainst"] = (df["gameDate"] - df["lastGameAgainst"]).dt.days
+#     df = df.dropna(axis=0)
+#     # goal_cols = []
+#     # for col in df.columns:
+#     #     if "goal" in col or "GoalsFor" in col:
+#     #         goal_cols.append(col)
+#     # df.drop(goal_cols, axis = 1, inplace=True)
+#     # df = df.fillna(0)
 
-    print(df)
+#     print(df)
 
-    print(df.shape)
+#     print(df.shape)
     
-    # Move to preprocess
+#     # Move to preprocess
 
-    # df["total_goals"] = df[df["goalsFor"] + df["goalsAgainst"]]
-    df["eloExpectedAgainst"] = 1 - df["eloExpectedFor"]
-    X = df.loc[:, df.columns.str.contains("ema") 
-    +df.columns.str.contains('elo') 
-    + df.columns.str.contains('daysRest')
-    + df.columns.str.contains('winPercentage') ] #+ df.columns.str.contains('eloExpectedFor')
-    # X = (X -X.mean())/(X-X.std())
-    X = X.drop(columns=[col for col in X.columns if "winner" in col])
-    y = df.loc[:, "winner"]
+#     # df["total_goals"] = df[df["goalsFor"] + df["goalsAgainst"]]
+#     df["eloExpectedAgainst"] = 1 - df["eloExpectedFor"]
+#     X = df.loc[:, df.columns.str.contains("ema") 
+#     +df.columns.str.contains('elo') 
+#     + df.columns.str.contains('daysRest')
+#     + df.columns.str.contains('winPercentage') ] #+ df.columns.str.contains('eloExpectedFor')
+#     # X = (X -X.mean())/(X-X.std())
+#     X = X.drop(columns=[col for col in X.columns if "winner" in col])
+#     y = df.loc[:, "winner"]
 
-    gb = XGBClassifier(objective="multi:softprob", num_class=2, learning_rate=0.013, max_depth=3)
-    gb.fit(X, y)
-    # feature_importance = np.mean(np.abs(gnb.theta_), axis=0)
-    # important = pd.DataFrame({'Feature': X.columns, 'Importance': gb.feature_importances})
-    # important.sort_values(by='Importance', ascending=False, inplace=True)
-    important = pd.DataFrame({'Feature': X.columns, 'Importance':gb.feature_importances_})
-    important.sort_values(by='Importance', ascending=False, inplace=True)
-    top_features = important['Feature'].head(50)
-    print(top_features)
-    X = X.loc[:, top_features]
+#     gb = XGBClassifier(objective="multi:softprob", num_class=2, learning_rate=0.013, max_depth=3)
+#     gb.fit(X, y)
+#     # feature_importance = np.mean(np.abs(gnb.theta_), axis=0)
+#     # important = pd.DataFrame({'Feature': X.columns, 'Importance': gb.feature_importances})
+#     # important.sort_values(by='Importance', ascending=False, inplace=True)
+#     important = pd.DataFrame({'Feature': X.columns, 'Importance':gb.feature_importances_})
+#     important.sort_values(by='Importance', ascending=False, inplace=True)
+#     top_features = important['Feature'].head(50)
+#     print(top_features)
+#     X = X.loc[:, top_features]
 
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
+#     scaler = StandardScaler()
+#     X_scaled = scaler.fit_transform(X)
 
-    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
+#     X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
 
-    model = tf.keras.Sequential([
-        Dense(128, activation='relu', kernel_regularizer=regularizers.l1_l2(l1=1e-5, l2=1e-4)),
-        layers.Dropout(0.3),
-        Dense(64, activation='relu', kernel_regularizer=regularizers.l1_l2(l1=1e-5, l2=1e-4)),
-        layers.Dropout(0.3),
-        layers.Dense(32, activation='relu', kernel_regularizer=regularizers.l1_l2(l1=1e-5, l2=1e-4)),
-        layers.Dropout(0.3),
-        layers.Dense(1, activation='sigmoid')
-    ])
+#     model = tf.keras.Sequential([
+#         Dense(128, activation='relu', kernel_regularizer=regularizers.l1_l2(l1=1e-5, l2=1e-4)),
+#         layers.Dropout(0.3),
+#         Dense(64, activation='relu', kernel_regularizer=regularizers.l1_l2(l1=1e-5, l2=1e-4)),
+#         layers.Dropout(0.3),
+#         layers.Dense(32, activation='relu', kernel_regularizer=regularizers.l1_l2(l1=1e-5, l2=1e-4)),
+#         layers.Dropout(0.3),
+#         layers.Dense(1, activation='sigmoid')
+#     ])
 
-    model.compile(loss='binary_crossentropy', optimizer='sgd', metrics=["binary_accuracy"])
+#     model.compile(loss='binary_crossentropy', optimizer='sgd', metrics=["binary_accuracy"])
 
-    model.summary()
+#     model.summary()
 
-    early_stop = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+#     early_stop = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
 
-    history = model.fit(X_train, y_train, epochs=400, batch_size=2, validation_data=(X_test, y_test), callbacks=[early_stop])
+#     history = model.fit(X_train, y_train, epochs=400, batch_size=2, validation_data=(X_test, y_test), callbacks=[early_stop])
 
-    loss,accuracy = model.evaluate(X_test, y_test)
-    print(f"Test Loss: {loss}")
-    print(f"Test Accuracy: {accuracy}")
+#     loss,accuracy = model.evaluate(X_test, y_test)
+#     print(f"Test Loss: {loss}")
+#     print(f"Test Accuracy: {accuracy}")
 
 def test_xgbosot_nhl_spread(spread):
     df = pd.read_csv("all_games_preproc.csv", low_memory=False)
     df = df[df["goalDiffFor"] != 0]
     X = df.loc[:, df.columns.str.contains("ema") + df.columns.str.contains("elo")]
 
-    df[f"spread_{spread}"] = np.where(df["goalDiffFor"] > spread, 1.0, 0.0)
+    df[f"spread_{spread}"] = np.where(df["goalDiffFor"] > -spread, 1.0, 0.0)
     y = df.loc[:, f"spread_{spread}"]
 
     X_temp = X.loc[:, X.columns.str.contains("ema") + X.columns.str.contains("eloExpected")]
@@ -207,7 +208,9 @@ def train_nhl_spread(X, y, spread, params=None):
         acc_results.append(acc)
 
         if acc == max(acc_results):
-            model.save_model(f"./backend/model/models/spread/XGBoot_{acc}%_Spread_{spread}.json")
+            if not os.path.exists(f"./backend/model/models/spread/{spread}"):
+                os.makedirs(f"./backend/model/models/spread/{spread}")
+            model.save_model(f"./backend/model/models/spread/{spread}/XGBoot_{acc}%_Spread_{spread}.json")
 def test_xgboost_nhl_ou(ou):
     df = pd.read_csv("all_games_preproc.csv", low_memory=False)
     df = df[df["goalDiffFor"] != 0]
@@ -314,7 +317,9 @@ def train_nhl_ou(X, y, ou, params=None):
         acc_results.append(acc)
 
         if acc == max(acc_results):
-            model.save_model(f"./backend/model/models/OU/XGBoot_{acc}%_OU_{ou}.json")
+            if not os.exist(f"./backend/model/models/OU/{ou}"):
+                os.makedirs(f"./backend/model/models/OU/{ou}")
+            model.save_model(f"./backend/model/models/OU/{ou}/XGBoot_{acc}%_OU_{ou}.json")
 def tune_xgboost_nhl_ou(ou):
     df = pd.read_csv("all_games_preproc.csv", low_memory=False)
     X = df.loc[:, df.columns.str.contains("ema") + df.columns.str.contains("elo")]
