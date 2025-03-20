@@ -1,4 +1,5 @@
 from flask import *
+from flask_sso import SSO
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.orm import sessionmaker
 import pandas as pd
@@ -6,10 +7,17 @@ import sys
 sys.path.insert(1, './backend/model')
 from nhl import NHLModel, best_model_path
 
+#
 app = Flask(__name__)
-nhl_ml_model = NHLModel("ml", model_path="./backend/model/models/ML/XGBoot_60.1%_ML.json")
-nhl_ou_model = lambda ou: NHLModel("ou", model_path = best_model_path("ou", "./backend/model/models/ou", ou) )
-nhl_spread_model = lambda spread: NHLModel("spread", model_path = best_model_path("spread", "./backend/model/models/spread", spread))
+
+
+#app.config['NHL_DB_URI']
+#app.config['USER_DB_URI']
+
+nhl_ml_model = NHLModel("ml", model_path="./backend/model/models/ML/XGBoot_61.2%_ML.json")
+nhl_ou_model = lambda ou: NHLModel("ou", model_path = best_model_path("OU", "./backend/model/models/", ou))
+nhl_spread_model = lambda spread: NHLModel("spread", model_path = best_model_path("spread", "./backend/model/models/", spread))
+
 # DATABASE_URL = "sqlite:///nhl.db"
 # engine = create_engine(DATABASE_URL)
 
@@ -28,9 +36,10 @@ def get_predictions_ml():
         return jsonify({"error":str(e)}), 500
 
 
-@app.route('/api/nhl/ou/<float:ou>/predict', methods=['GET'])
+@app.route('/api/nhl/ou/predict', methods=['GET'])
 def get_predictions_ou():
-    try: 
+    try:
+        ou = float(request.args.get('ou'))
         home = request.args.get('home')
         away = request.args.get('away')
 
@@ -40,9 +49,10 @@ def get_predictions_ou():
         return jsonify({"error":str(e)}), 500
 
     return jsonify({"predictions":predictions.tolist()}), 200
-@app.route('/api/nhl/<float:spread/predict', methods=['GET'])
+@app.route('/api/nhl/spread/predict', methods=['GET'])
 def get_predictions_spread():
     try:
+        spread = float(request.args.get('spread'))
         home = request.args.get('home')
         away = request.args.get('away')
 
@@ -78,12 +88,12 @@ def train_nhl_model():
         ou = request.args.get('ou')
     except Exception as e:
         print(e)
-@app.route('/api/nhl/train/ml')
-def train_nhl_model():
-    try:
-        ou = request.args.get('ou')
-    except Exception as e:
-        print(e)
+#@app.route('/api/nhl/train/ml')
+#def train_nhl_model():
+#    try:
+#        ou = request.args.get('ou')
+#    except Exception as e:
+#        print(e)
 
 if __name__ == "__main__":
     app.run(debug=True)

@@ -227,7 +227,7 @@ def test_xgboost_nhl_ou(ou):
     rf.fit(X_temp, y)
     important = pd.DataFrame({'Feature': X_temp.columns, 'Importance':rf.feature_importances_})
     important.sort_values(by='Importance', ascending=False, inplace=True)
-    top_features = important['Feature'].head(20)
+    top_features = important['Feature'].head(50)
     print(top_features)
     X = X.loc[:, top_features]
 
@@ -317,7 +317,7 @@ def train_nhl_ou(X, y, ou, params=None):
         acc_results.append(acc)
 
         if acc == max(acc_results):
-            if not os.exist(f"./backend/model/models/OU/{ou}"):
+            if not os.path.exists(f"./backend/model/models/OU/{ou}"):
                 os.makedirs(f"./backend/model/models/OU/{ou}")
             model.save_model(f"./backend/model/models/OU/{ou}/XGBoot_{acc}%_OU_{ou}.json")
 def tune_xgboost_nhl_ou(ou):
