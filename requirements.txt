@@ -8,3 +8,4 @@ requests
 sqlalchemy
 flask
 tensorflow
+flask-sso

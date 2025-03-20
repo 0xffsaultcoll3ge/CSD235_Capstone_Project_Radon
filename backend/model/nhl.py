@@ -5,7 +5,7 @@ import sys
 sys.path.insert(1, './backend/preprocess')
 import elo
 import pandas as pd
-
+import os
 
 def update_seasonal_ema(df: pd.DataFrame):
     ema_columns = [col for col in df.columns if re.match(r'.*_seasonal_ema_span_\d+', col)]
@@ -16,7 +16,7 @@ def update_seasonal_ema(df: pd.DataFrame):
     for ema_column in ema_columns:
         match = re.match(r'(.+)_seasonal_ema_span_(\d+)', ema_column)
         if match:
-            feat = match.group(1)
+            feat = str(match.group(1))
             span = int(match.group(2))
             
             alpha = 2 / (span + 1)
@@ -31,19 +31,19 @@ def update_seasonal_ema(df: pd.DataFrame):
 def best_model_path(event: str, model_dir: str, threshold = None) -> str:
     d = None
     try:
-        if event not in ["ou", "spread"]:
+        if threshold == None:
             d = os.path.join(model_dir, event)
         else:
-            assert(threshold != None)
-            d = os.path.join(model_dir, event, threshold)
+            d = os.path.join(model_dir, event, str(threshold))
         max_acc = -1
         best_model = None
-        for model in d:
-            acc = float(re.find(r'(\d+(\.\d+)?%)'))
+        
+        for model in os.listdir(d):
+            acc = float(re.search(r'\d+\.\d+', str(model)).group())
             if acc > max_acc:
                 max_acc = acc
                 best_model = model
-        return model
+        return os.path.join(d, str(best_model))
     except Exception as e:
         print(e)
 
