@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="styles/predictions.css">
 </head>
 <body>
+
+    <!-- nav bar -->
     <nav>
         <div class="nav-left">
             <div class="account-icon" id="accountIcon"></div>
@@ -23,7 +25,7 @@
         </div>
     </nav>
 
-  <!-- Account Dropdown -->
+    <!-- Account Dropdown -->
   <div class="dropdown-menu" id="accountDropdown">
     <div id="userDisplay">Account</div>
 
@@ -46,22 +48,42 @@
     <!-- logout button (hidden until logged in) -->
     <button id="logoutButton" style="display: none;">Logout</button>
 </div>
+    
+    <div class="prediction-wrapper">
+        <h1>NHL Predictions</h1>
 
-    <div class="prediction-container">
-        <select id="home-team">
-            <option value="">Select Home Team</option>
-        </select>
-        
-        <span>vs</span>
+        <!-- team selection -->
+        <div class="team-selection">
+            <select id="home-team">
+                <option value="">Select Home Team</option>
+            </select>
 
-        <select id="away-team">
-            <option value="">Select Away Team</option>
-        </select>
+            <span class="vs-text">VS</span>
 
-        <br> <!-- This ensures the button moves to the next line -->
-        <button id="get-prediction">Get Prediction</button>
-        
-        <div id="prediction-result">Prediction will appear here</div>
+            <select id="away-team">
+                <option value="">Select Away Team</option>
+            </select>
+        </div>
+
+        <!-- prediction buttons -->
+        <div class="prediction-buttons">
+            <button id="get-prediction">Get Moneyline Prediction</button>
+            <button id="get-spread-prediction">Get Spread Prediction</button>
+            <button id="get-ou-prediction">Get Over/Under Prediction</button>
+        </div>
+
+        <!-- over under input -->
+        <div class="ou-container">
+            <label for="ou-value">Over/Under:</label>
+            <input type="number" id="ou-value" placeholder="Enter OU value" step="0.1" min="0">
+        </div>
+
+        <!-- results display -->
+        <div class="prediction-results">
+            <div id="ml-result" class="result-box">Moneyline Prediction will appear here</div>
+            <div id="spread-result" class="result-box">Spread Prediction will appear here</div>
+            <div id="ou-result" class="result-box">Over/Under Prediction will appear here</div>
+        </div>
     </div>
 
     <script src="scripts/predict.js"></script>
