@@ -10,12 +10,14 @@ from nhl import NHLModel, best_model_path
 #
 app = Flask(__name__)
 
+
 #app.config['NHL_DB_URI']
 #app.config['USER_DB_URI']
 
 nhl_ml_model = NHLModel("ml", model_path="./backend/model/models/ML/XGBoot_61.2%_ML.json")
 nhl_ou_model = lambda ou: NHLModel("ou", model_path = best_model_path("OU", "./backend/model/models/", ou))
 nhl_spread_model = lambda spread: NHLModel("spread", model_path = best_model_path("spread", "./backend/model/models/", spread))
+
 # DATABASE_URL = "sqlite:///nhl.db"
 # engine = create_engine(DATABASE_URL)
 

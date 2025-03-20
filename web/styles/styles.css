@@ -1,0 +1,79 @@
+/* GENERAL STYLES */
+body {
+    font-family: Arial, sans-serif;
+}
+
+/* NAVBAR */
+nav {
+    display: flex;
+    justify-content: flex-end;
+    padding: 10px;
+    background: #333;
+    color: white;
+}
+
+/* ACCOUNT BUTTON */
+#accountContainer {
+    position: relative;
+}
+
+#accountIcon {
+    background: #444;
+    color: white;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+}
+
+/* DROPDOWN MENU */
+.dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    background: white;
+    border: 1px solid #ccc;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    z-index: 100;
+}
+
+.dropdown-content button {
+    display: block;
+    background: none;
+    border: none;
+    text-align: left;
+    padding: 5px 10px;
+    width: 100%;
+    cursor: pointer;
+}
+
+/* MODAL */
+.modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 20px;
+    border: 1px solid #ccc;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 101;
+}
+
+.modal-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.modal input {
+    margin-bottom: 10px;
+    padding: 5px;
+    width: 100%;
+}
+
+.modal .close {
+    cursor: pointer;
+    font-size: 20px;
+    align-self: flex-end;
+}
