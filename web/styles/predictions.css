@@ -1,56 +1,107 @@
-/* Predictions Page */
-
-/* centers everything and stacks vertically */
-.prediction-container {
-    display: flex;
-    flex-direction: column;         
-    align-items: center;            
-    justify-content: center;        
-    height: calc(100vh - 80px);     
+/* center everything */
+.prediction-wrapper {
+    max-width: 600px;
+    margin: 50px auto;
     text-align: center;
-    margin-top: 20px;
+    background-color: #1a1a2e;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(255, 223, 0, 0.2);
 }
 
-/* vs between dropdown menus */
-.prediction-container span {
-    font-size: 1.2rem;
-    margin: 0 10px;
-    color: white;
+.prediction-wrapper h1 {
+    color: #ffd700;
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+.team-selection {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
 }
 
-/* dropdown menus */
-.prediction-container select {
-    padding: 10px 15px;
-    font-size: 1rem;
-    border: 2px solid #FFD700;               
-    border-radius: 5px;
-    background-color: #1A1F2E;              
-    color: white;
-    margin: 10px;             
-    appearance: none;
-}
-
-.prediction-container button {
-    padding: 10px 20px;
-    font-size: 1rem;
+.vs-text {
+    font-size: 18px;
     font-weight: bold;
-    background: linear-gradient(45deg, #E6B400, #F5B800, #FFD700); 
+    color: #ffd700;
+}
+
+select {
+    background-color: #12122b;
+    color: white;
+    border: 2px solid #ffd700;
+    padding: 10px;
+    border-radius: 5px;
+    font-size: 16px;
+    outline: none;
+    transition: 0.3s;
+}
+
+select:hover {
+    background-color: #24244b;
+}
+
+.prediction-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+button {
+    background-color: #ffd700;
+    color: #1a1a2e;
+    font-size: 16px;
+    font-weight: bold;
     border: none;
+    padding: 12px;
     border-radius: 5px;
-    color: #121826;                        
     cursor: pointer;
-    margin-top: 20px;
+    transition: 0.3s;
 }
 
-.prediction-container button:hover {
-    transform: translateY(-3px);
+button:hover {
+    background-color: #e6c200;
+}
+.ou-container {
+    margin-bottom: 20px;
 }
 
-#prediction-result {
-    font-size: 1.5rem;
-    font-weight: bold;
-    margin-top: 20px;
-    background: linear-gradient(45deg, #E6B400, #F5B800, #FFD700);
-    -webkit-background-clip: text; /* fixed blur with gradient */
-    color: transparent;
+.ou-container label {
+    font-size: 16px;
+    color: white;
+}
+
+.ou-container input {
+    background-color: #12122b;
+    color: white;
+    border: 2px solid #ffd700;
+    padding: 8px;
+    border-radius: 5px;
+    font-size: 16px;
+    outline: none;
+    width: 120px;
+    text-align: center;
+}
+
+.ou-container input::placeholder {
+    color: #a8a8a8;
+}
+
+.prediction-results {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.result-box {
+    background-color: #12122b;
+    color: white;
+    padding: 15px;
+    border-radius: 5px;
+    border: 2px solid #ffd700;
+    font-size: 16px;
+    text-align: center;
 }

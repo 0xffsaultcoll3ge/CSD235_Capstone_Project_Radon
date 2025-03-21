@@ -10,7 +10,7 @@
 <body>
   <nav>
     <div class="nav-left">
-      <div class="account-icon"></div>
+      <div class="account-icon" id="accountIcon"></div>
       <span>Project Radon</span>
     </div>
     <div class="nav-right">
@@ -22,12 +22,41 @@
     </div>
   </nav>
 
+    <!-- Account Dropdown -->
+    <div class="dropdown-menu" id="accountDropdown">
+      <div id="userDisplay">Account</div>
+
+      <!-- Subscription status (hidden until logged in) -->
+      <div id="subscriptionStatus" style="display: none;"></div>
+
+      <!-- Login Form -->
+      <div id="authForms">
+          <input type="email" id="loginEmail" placeholder="Email">
+          <input type="password" id="loginPassword" placeholder="Password">
+          <button id="loginButton">Login</button>
+          <button id="showRegister">Register</button>
+      </div>
+
+      <!-- Registration Form -->
+      <div id="registerForm" style="display: none;">
+          <input type="text" id="registerFirstName" placeholder="First Name">
+          <input type="text" id="registerLastName" placeholder="Last Name">
+          <input type="email" id="registerEmail" placeholder="Email">
+          <input type="password" id="registerPassword" placeholder="Password">
+          <button id="registerButton">Register</button>
+          <button id="showLogin">Back to Login</button>
+      </div>
+
+      <!-- Logout Button (hidden until logged in) -->
+      <button id="logoutButton" style="display: none;">Logout</button>
+  </div>
+
   <div class="pricing-container">
     <div class="pricing-box">
       <h2>Premium Subscription</h2>
       <p class="features">
         Enjoy real-time predictions, detailed game analytics, and exclusive insights:<br>
-        - Real-time NHL predictions<br>
+        - Access to predictions page (real-time NHL predictions)<br>
         - Detailed game analytics<br>
         - Personalized betting recommendations<br>
         - 24/7 customer support
@@ -37,5 +66,6 @@
     </div>
   </div>
 
+  <script src="scripts/account.js"></script>
 </body>
 </html>
