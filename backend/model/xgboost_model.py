@@ -115,7 +115,7 @@ def test_xgbosot_nhl_spread(spread):
     rf.fit(X_temp, y)
     important = pd.DataFrame({'Feature': X_temp.columns, 'Importance':rf.feature_importances_})
     important.sort_values(by='Importance', ascending=False, inplace=True)
-    top_features = important['Feature'].head(50)
+    top_features = important['Feature'].head(70)
     print(top_features)
     X = X.loc[:, top_features]
 
@@ -174,7 +174,7 @@ def test_xgbosot_nhl_spread(spread):
     print(f"Test Accuracy: {accuracy * 100:.2f}%")
     print(f"Training Accuracy: {train_acc * 100:.2f}%")
 
-    train_nhl_spread(X, y, spread)
+    train_nhl_spread(X, y, spread, params=params)
 
 
 
@@ -227,7 +227,7 @@ def test_xgboost_nhl_ou(ou):
     rf.fit(X_temp, y)
     important = pd.DataFrame({'Feature': X_temp.columns, 'Importance':rf.feature_importances_})
     important.sort_values(by='Importance', ascending=False, inplace=True)
-    top_features = important['Feature'].head(50)
+    top_features = important['Feature'].head(70)
     print(top_features)
     X = X.loc[:, top_features]
 

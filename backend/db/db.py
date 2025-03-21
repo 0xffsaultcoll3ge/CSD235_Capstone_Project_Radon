@@ -3,6 +3,9 @@ import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 import os
+import sys
+sys.path.insert(1, './backend/preprocess')
+from preprocess import *
 # from dotenv import load_dotenv
 
 def get_table_csv(table_name, csv_map, update=False) -> pd.DataFrame:
@@ -13,7 +16,7 @@ def get_table_csv(table_name, csv_map, update=False) -> pd.DataFrame:
         scraper.download_nhl_team_data()
         preproc.update_csv(fpath)
     return pd.read_csv(fpath)
-def create_table_map(tables, teams=None):
+def create_table_map(teams=None):
     mp = {}
     if teams == None:
         with open('team_files', 'r') as f:
@@ -53,9 +56,9 @@ class NHLPipeline:
 
         try:
             if game_type == "regular":
-                download_file(regular_base_url,"regular", path=path)
+                download_file(regular_base_url,"teams","regular", path=path)
             else:
-                download_file(regular_base_url,"playoff", path=path)
+                download_file(regular_base_url,"teams", "playoff", path=path)
         except Exception as e:
             print(e)
 
@@ -79,7 +82,7 @@ class NHLPipeline:
                 print(f"An error occurred while trying to update table {table}: {e}")
     def preprocess_team_data(self, preproc_table: str):
         try:
-            team_df = preproc.update_csv()
+            team_df = self.preproc.update_csv()
             df.to_sql(preproc_table, con=self.engine, if_exists="append", index=False)
         except Exception as e:
             print(e)
@@ -144,5 +147,5 @@ class NHLPipeline:
 if __name__ == "__main__":
     db = NHLPipeline()
     df = pd.read_csv("all_games_preproc.csv")
-    df = db.write_to_table(df, "games_preproc")
+    df = db.write_to_table(df)
     print(df)
