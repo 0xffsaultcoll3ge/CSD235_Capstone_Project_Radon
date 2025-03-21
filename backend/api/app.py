@@ -127,8 +127,6 @@ def train_nhl_update():
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'success': False})
-        
-    
 if __name__ == "__main__":
     app.run(debug=True)
 
