@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
+    
     const AUTH_API = "http://localhost:5000"; 
 
     const accountIcon = document.getElementById("accountIcon");
