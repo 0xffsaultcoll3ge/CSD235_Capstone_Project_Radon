@@ -6,6 +6,7 @@ services:
       dockerfile: Dockerfile.flask  # Use the Flask Dockerfile
     ports:
       - "5000:5000"  # Map host port 5000 to container port 5000
+    network_mode: host
     volumes:
       - .:/app  # Mount the entire repository for live updates
     environment:
@@ -18,6 +19,7 @@ services:
       dockerfile: Dockerfile.node  # Use the Node.js Dockerfile
     ports:
       - "3000:3000"  # Map host port 3000 to container port 3000
+    network_mode: host
     volumes:
       - .:/app  # Mount the entire repository for live updates
     environment:

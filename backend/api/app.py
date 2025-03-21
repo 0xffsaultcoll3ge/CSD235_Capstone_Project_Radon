@@ -6,16 +6,19 @@ from sqlalchemy.orm import sessionmaker
 import pandas as pd
 import sys
 
-from flask_login import LoginManager
-sys.path.insert(1, './backend/model')
-from nhl import NHLModel, best_model_path
-sys.path.insert(2, './backend/db')
-from models import User, db
-
+sys.path.insert(1, 'backend/model')
+sys.path.insert(2, 'backend/db')
 sys.path.insert(3, './backend/api')
+from nhl_model import NHLModel, best_model_path
+import os
+from dotenv import load_dotenv
+from nhl_train import NHLModelTrainer
+from db import NHLPipeline, create_table_map
+from flask_login import LoginManager
+from models import User, db
 from auth import auth_bp
 
-import os
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True, origins=["http://localhost:3000"], allow_headers=["Content-Type"], methods=["GET", "POST", "OPTIONS"])  # FIXED CORS
@@ -32,18 +35,19 @@ login_manager.login_view = 'auth.login'
 CORS(auth_bp, supports_credentials=True)  # fixed cors for auth routes
 app.register_blueprint(auth_bp)
 
-#app.config['NHL_DB_URI']
-#app.config['USER_DB_URI']
+MODEL_DIR = os.getenv("MODEL_DIR")
 
-nhl_ml_model = NHLModel("ml", model_path="./backend/model/models/ML/XGBoot_61.2%_ML.json")
-nhl_ou_model = lambda ou: NHLModel("ou", model_path = best_model_path("OU", "./backend/model/models/", ou))
-nhl_spread_model = lambda spread: NHLModel("spread", model_path = best_model_path("spread", "./backend/model/models/", spread))
+nhl_trainer = NHLModelTrainer()
+nhl_pipeline = NHLPipeline()
+nhl_ml_model = NHLModel("ml", model_path=f"./backend/model/models/ML/XGBoot_61.2%_ML.json")
+nhl_ou_model = lambda ou: NHLModel("ou", model_path = best_model_path("OU", MODEL_DIR, ou))
+nhl_spread_model = lambda spread: NHLModel("spread", model_path = best_model_path("spread", MODEL_DIR, spread))
 
 DATABASE_URL = "sqlite:///nhl.db"
 engine = create_engine(DATABASE_URL)
 
-# Session = sessionmaker(bind=engine)
-# session = Session()
+Session = sessionmaker(bind=engine)
+session = Session()
 
 # User loader
 @login_manager.user_loader
@@ -92,7 +96,7 @@ def get_predictions_spread():
 def get_team_data():
     try:
         team = request.args.get('team')
-        q = "SELECT * FROM games WHERE (team = '{team}' OR opposingTeam = '{team}')"
+        q = f"SELECT * FROM {team} LIMIT 1"
         df = pd.read_sql(q, engine)
 
         return df.to_json()
@@ -147,19 +151,49 @@ def american_to_decimal(american_odds):
         return (100 / abs(american_odds)) + 1
 
 @app.route('/api/nhl/train/ou')
-def train_nhl_model():
+def train_nhl_ou_model():
     try:
-        ou = request.args.get('ou')
+        ou = float(request.args.get('ou'))
+        X, y = nhl_trainer.preprocess('ou', nhl_trainer.load_data(), value=ou)
+        model, acc = nhl_trainer.train_ou(X, y, ou)
+        return jsonify({'success': True, 'max_accuracy': acc })
     except Exception as e:
         print(e)
-#@app.route('/api/nhl/train/ml')
-#def train_nhl_model():
-#    try:
-#        ou = request.args.get('ou')
-#    except Exception as e:
-#        print(e)
+        return jsonify({'success': False})
 
-# Initialize the database
+
+@app.route('/api/nhl/train/spread')
+def train_nhl_spread_model():
+    try:
+        spread = float(request.args.get('spread'))
+        X, y = nhl_trainer.preprocess('spread', nhl_trainer.load_data(), value=spread)
+        model, acc = nhl_trainer.train_spread(X, y, spread)
+        return jsonify({'success': True, 'max_accuracy': acc })
+    except Exception as e:
+        print(e)
+        return jsonify({'success': False})
+@app.route('/api/nhl/train/ml')
+def train_nhl_ml_model():
+   try:
+       ou = request.args.get('ou')
+       X, y = nhl_trainer.preprocess('ml', nhl_trainer.load_data())
+       model, acc = nhl_trainer.train_ml(X, y)
+       return jsonify({'success': True, 'max_accuracy': acc })
+   except Exception as e:
+       print(e)
+       return jsonify({'success': False})
+
+@app.route('/api/nhl/data/update')
+def train_nhl_update():
+    mp = create_table_map()
+    try:
+        nhl_pipeline.update_team_db(mp)
+        nhl_pipeline.preprocess_team_data("games_preproc")
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False})
+
+
 with app.app_context():
     db.create_all()
 

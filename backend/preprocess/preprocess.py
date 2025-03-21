@@ -294,7 +294,7 @@ class Preprocessor:
             df_list = list(data_map.values())
             ret_df = pd.concat(df_list, ignore_index=True).sort_values(by="gameId")
         return ret_df.sort_values(by="gameId").set_index("gameId")
-    def update_csv(self, filepath):
+    def update_csv(self):
         self.data_list = self.dataframe_list("teams")
         self.data_list = [self.clean_dataframe(df) for df in self.data_list]
 
@@ -314,7 +314,8 @@ class Preprocessor:
         team_df = self.concat_team_dataframes(new_data_map)
         team_df = team_df.loc[:, ~team_df.columns.str.contains('^Unnamed')]
         team_df = self.apply_elo_rating(team_df, K=32, decay=0.01)
-        team_df.to_csv(filepath)
+        team_df.to_csv("all_games_preproc.csv")
+        return team_df
         #write to database when finished, change function name
 
 if __name__ == "__main__":  
