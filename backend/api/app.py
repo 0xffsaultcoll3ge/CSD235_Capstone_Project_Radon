@@ -15,6 +15,7 @@ from db import NHLPipeline, create_table_map
 load_dotenv()
 app = Flask(__name__)
 
+
 MODEL_DIR = os.getenv("MODEL_DIR")
 
 nhl_trainer = NHLModelTrainer()

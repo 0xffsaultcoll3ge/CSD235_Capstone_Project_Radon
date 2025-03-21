@@ -12,7 +12,7 @@
     <!-- Navigation Bar -->
     <nav>
         <div class="nav-left">
-            <div class="account-icon"></div>
+            <div class="account-icon" id="accountIcon"></div>
             <span>Project Radon</span>
         </div>
         <div class="nav-right">
@@ -23,13 +23,39 @@
             <a href="history.html">History</a>
         </div>
     </nav>
+
+  <!-- Account Dropdown -->
+  <div class="dropdown-menu" id="accountDropdown">
+    <div id="userDisplay">Account</div>
+
+    <!-- subscription status (hidden until logged in) -->
+    <div id="subscriptionStatus" style="display: none;"></div>
+
+    <div id="authForms">
+        <input type="email" id="loginEmail" placeholder="Email">
+        <input type="password" id="loginPassword" placeholder="Password">
+        <button id="loginButton">Login</button>
+        <button id="showRegister">Register</button>
+    </div>
+    <div id="registerForm" style="display: none;">
+        <input type="email" id="registerEmail" placeholder="Email">
+        <input type="password" id="registerPassword" placeholder="Password">
+        <button id="registerButton">Register</button>
+        <button id="showLogin">Back to Login</button>
+    </div>
+
+    <!-- logout button (hidden until logged in) -->
+    <button id="logoutButton" style="display: none;">Logout</button>
+</div>
+
+    <!-- Home Page Content -->
     <img src="images/money.png" alt="Money Logo" class="logo">
 
     <div class="home-description">
         <h1>Revolutionizing NHL sports betting with machine learning. <span class="highlight">Enhance</span> your bets with this technology and give yourself a competitive edge.</h1>
     </div>
 
-    <script src="script.js"></script>
+    <script src="scripts/account.js"></script>
 
 </body>
 </html>
