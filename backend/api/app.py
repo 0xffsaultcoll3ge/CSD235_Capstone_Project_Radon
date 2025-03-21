@@ -1,4 +1,5 @@
 from flask import *
+from flask_cors import CORS
 from flask_sso import SSO
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.orm import sessionmaker
@@ -9,28 +10,26 @@ from flask_login import LoginManager
 sys.path.insert(1, './backend/model')
 from nhl import NHLModel, best_model_path
 sys.path.insert(2, './backend/db')
-from models import User,db
+from models import User, db
 
 sys.path.insert(3, './backend/api')
 from auth import auth_bp
 
 import os
 
-#
 app = Flask(__name__)
+CORS(app, supports_credentials=True, origins=["http://localhost:3000"], allow_headers=["Content-Type"], methods=["GET", "POST", "OPTIONS"])  # FIXED CORS
 
-# Configuration
 app.config['SECRET_KEY'] = 'raghav-sharma-key'
-BASE_DIR = os.path.abspath(os.path.dirname(__file__))  # Gets the root directory
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(BASE_DIR, "../users.db")}'  # Separate database for users
+BASE_DIR = os.path.abspath(os.path.dirname(__file__))  
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(BASE_DIR, "../users.db")}' 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Initialize extensions
 db.init_app(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'auth.login'
 
-# Register Blueprints
+CORS(auth_bp, supports_credentials=True)  # fixed cors for auth routes
 app.register_blueprint(auth_bp)
 
 #app.config['NHL_DB_URI']
@@ -50,7 +49,6 @@ engine = create_engine(DATABASE_URL)
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-
 
 @app.route('/api/nhl/ml/predict', methods=['GET'])
 def get_predictions_ml():
