@@ -16,8 +16,6 @@ from auth import auth_bp
 
 import os
 
-
-
 #
 app = Flask(__name__)
 
@@ -35,8 +33,8 @@ login_manager.login_view = 'auth.login'
 # Register Blueprints
 app.register_blueprint(auth_bp)
 
-app.config['NHL_DB_URI']
-app.config['USER_DB_URI']
+#app.config['NHL_DB_URI']
+#app.config['USER_DB_URI']
 
 nhl_ml_model = NHLModel("ml", model_path="./backend/model/models/ML/XGBoot_61.2%_ML.json")
 nhl_ou_model = lambda ou: NHLModel("ou", model_path = best_model_path("OU", "./backend/model/models/", ou))
@@ -113,26 +111,27 @@ def get_game_odds():
         return jsonify({"error": e})
     
 
-@app.route('/api/nhl/odds/<int:gameId>', methods=['GET'])
-def get_game_odds(gameId):  # Add 'gameId' as a parameter
-    try:
-        odds_format = request.args.get('odds_format', default='american', type=str)
+#@app.route('/api/nhl/odds/<int:gameId>', methods=['GET'])
+#def get_game_odds(gameId):  # Add 'gameId' as a parameter
+#    try:
+#        odds_format = request.args.get('odds_format', default='american', type=str)
+#
+#        q = "SELECT * FROM odds WHERE gameId = :gameId"
+#        df = pd.read_sql(q, engine, params={"gameId": gameId})
+#       
+#        if odds_format == 'decimal':
+#            df['odds'] = df['odds'].apply(lambda x: american_to_decimal(x))
+#        elif odds_format == 'american':
+#            pass 
+#        else:
+#            return jsonify({"error": "Invalid odds format. Use 'american' or 'decimal'."}), 400
 
-        q = "SELECT * FROM odds WHERE gameId = :gameId"
-        df = pd.read_sql(q, engine, params={"gameId": gameId})
-       
-        if odds_format == 'decimal':
-            df['odds'] = df['odds'].apply(lambda x: american_to_decimal(x))
-        elif odds_format == 'american':
-            pass 
-        else:
-            return jsonify({"error": "Invalid odds format. Use 'american' or 'decimal'."}), 400
-
-        return df.to_json(orient='records'), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500  
+#        return df.to_json(orient='records'), 200
+#    except Exception as e:
+#        return jsonify({"error": str(e)}), 500  
+ 
     
-@app.route('/api/nhl/odds/historical/<int:gameId>', methods=['GET'])
+"""@app.route('/api/nhl/odds/historical/<int:gameId>', methods=['GET'])
 def get_historical_odds(gameId): 
     try:
         q = "SELECT * FROM historicalOdds WHERE gameId = :gameId"
@@ -140,7 +139,7 @@ def get_historical_odds(gameId):
 
         return df.to_json(orient='records'), 200
     except Exception as e:
-        return jsonify({"error": str(e)}), 500  
+        return jsonify({"error": str(e)}), 500  """
     
 def american_to_decimal(american_odds):
   
