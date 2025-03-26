@@ -1,0 +1,38 @@
+    def tune_hyperparameters(self, event, X, y, param_dist=None, cv=5):
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        X, y = balance_dataset(X_train, X_test, y_train, y_test, dmatrix=False)
+        model = xgb.XGBClassifier(objective="multi:softprob",
+                                  eval_metric="mlogloss",
+                                  num_class=2)
+
+        random_search = RandomizedSearchCV(
+            estimator=model,
+            param_distributions=param_dist,
+            cv=cv,
+            verbose=1,
+            random_state=42,
+            n_jobs=-1,
+            scoring='neg_log_loss'
+        )
+
+        random_search.fit(X, y)
+
+        self.best_params[event] = random_search.best_params_
+
+        if self.print_logs:
+            logging.info(f"Best hyperparameters for {event}: {json.dumps(self.best_params[event], indent=4)}")
+
+        self.save_params(self.best_params[event], os.path.join(self.model_save_path, f"hyperparameter_{event}.json"))
+
+        best_model = random_search.best_estimator_
+        y_pred = []
+        predictions = best_model.predict(X_test)
+        for z in predictions:
+            y_pred.append(np.argmax(z))
+        acc = round(accuracy_score(y_test, y_pred)*100, 1)
+        if self.print_logs:
+            logging.info(f"Accuracy of {event} tuned model: {acc}")
+
+        model_filename = os.path.join(self.model_save_path, f"XGBoost_best_model.json")
+        best_model.save_model(model_filename)
+        logging.info(f"Best model saved at {model_filename}")

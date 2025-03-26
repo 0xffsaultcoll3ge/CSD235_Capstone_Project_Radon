@@ -147,5 +147,5 @@ class NHLPipeline:
 if __name__ == "__main__":
     db = NHLPipeline()
     df = pd.read_csv("all_games_preproc.csv")
-    df = db.write_to_table(df)
+    df = db.write_to_table(df, "games_preproc")
     print(df)

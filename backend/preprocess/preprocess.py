@@ -144,12 +144,12 @@ class Preprocessor:
     def ema_df(self, df):
         if self.sport == "NHL" and self.subject == "teams":
             for col in get_float_features(df):
+                df[f"{col}_seasonal_ema_span_3"] = calculate_seasonal_ema(df, col, span=3)
                 df[f"{col}_seasonal_ema_span_5"] = calculate_seasonal_ema(df, col, span=5)
                 df[f"{col}_seasonal_ema_span_8"] = calculate_seasonal_ema(df, col, span=8)
                 df[f"{col}_seasonal_ema_span_13"] = calculate_seasonal_ema(df, col, span=13)
-                df[f"{col}_seasonal_ema_span_21"] = calculate_seasonal_ema(df, col, span=21)
-                df[f"{col}_seasonal_ema_span_34"] = calculate_seasonal_ema(df, col, span=34)
-                df[f"{col}_seasonal_ema_span_55"] = calculate_seasonal_ema(df, col, span=55)
+                df[f"{col}_seasonal_ema_span_34"] = calculate_seasonal_ema(df, col, span=21)
+                df[f"{col}_seasonal_ema_span_55"] = calculate_seasonal_ema(df, col, span=21)
             return df
         else:
             return None
@@ -321,8 +321,8 @@ class Preprocessor:
 if __name__ == "__main__":  
     preproc = Preprocessor("NHL")
     scraper = Scraper("NHL")
-    scraper.download_nhl_team_data()
-    preproc.update_csv("all_games_preproc.csv")
+#    scraper.download_nhl_team_data()
+    preproc.update_csv()
 
 
     

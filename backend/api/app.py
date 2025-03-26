@@ -23,9 +23,6 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app, supports_credentials=True, origins=["http://localhost:3000"], allow_headers=["Content-Type"], methods=["GET", "POST", "OPTIONS"])  # FIXED CORS
 
-<<<<<<< HEAD
-
-=======
 app.config['SECRET_KEY'] = 'raghav-sharma-key'
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))  
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{os.path.join(BASE_DIR, "../users.db")}' 
@@ -38,13 +35,12 @@ login_manager.login_view = 'auth.login'
 CORS(auth_bp, supports_credentials=True)  # fixed cors for auth routes
 app.register_blueprint(auth_bp)
 
->>>>>>> 0c3040d645a435bc1ccb99d30395c3791a965334
-MODEL_DIR = os.getenv("MODEL_DIR")
+MODEL_DIR = "./backend/model/models/" #os.getenv("MODEL_DIR")
 
 nhl_trainer = NHLModelTrainer()
 nhl_pipeline = NHLPipeline()
-nhl_ml_model = NHLModel("ml", model_path=f"./backend/model/models/ML/XGBoot_61.2%_ML.json")
-nhl_ou_model = lambda ou: NHLModel("ou", model_path = best_model_path("OU", MODEL_DIR, ou))
+nhl_ml_model = NHLModel("ml", model_path=best_model_path("ML", MODEL_DIR))
+nhl_ou_model = lambda ou: NHLModel("ou", model_path = best_model_path("ou", MODEL_DIR, ou))
 nhl_spread_model = lambda spread: NHLModel("spread", model_path = best_model_path("spread", MODEL_DIR, spread))
 
 DATABASE_URL = "sqlite:///nhl.db"
