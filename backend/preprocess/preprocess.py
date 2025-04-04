@@ -34,10 +34,16 @@ def get_float_features(df):
             feats.append(feat)
     return feats
 
-def download_file(url, sport, subject, gametype, path=None):
+def download_file(url, sport, subject, gametype=None, path=None):
     if path == None:
-        _dir = "./backend/data/{0}/{1}/{2}".format(sport, subject, gametype)
-        path = "./backend/data/{0}/{1}/{2}/{3}".format(sport, subject, gametype, url.split("/")[-1])
+        if sport == "NHL":
+            _dir = "./backend/data/{0}/{1}/{2}".format(sport, subject, gametype)
+            path = "./backend/data/{0}/{1}/{2}/{3}".format(sport, subject, gametype, url.split("/")[-1])
+        elif sport == "EPL":
+            _dir = "./backend/data/{0}/{1}/{2}".format(sport, subject)
+            path = "./backend/data/{0}/{1}/season/{2}/{3}".format(sport,subject,url.split("/")[-2], url.split("/")[-1])
+        else:
+            path = None
     try:
         r = requests.get(url)
         if r.status_code == 404:
@@ -57,6 +63,23 @@ class Scraper:
         self.sports = ["NHL"]
         if self.sport not in self.sports:
             raise Exception("Error during instantiation, invalid sport: {0}".format(self.sport))
+    # def download_epl_team_data():
+    #     # base_url = "https://www.football-data.co.uk/mmz4281/"
+    #     try:
+    #         start = 93
+    #         for i in range(0,31):
+    #             season_str = f"{start}{start + 1}/"
+    #             e_val = 0
+    #             for i in range(5):
+    #                 e_str = f"E{e_val}"
+    #                 season_url = base_url + season_str + e_str
+    #                 download_file("EPL", "games")
+    #             start += 1
+    #         return True
+    #     except Exception as e:
+    #         print(e)
+    #         return False
+
 
     def download_nhl_team_data(regular=True, playoff=True):
         try:
@@ -144,12 +167,12 @@ class Preprocessor:
     def ema_df(self, df):
         if self.sport == "NHL" and self.subject == "teams":
             for col in get_float_features(df):
+                df[f"{col}_seasonal_ema_span_3"] = calculate_seasonal_ema(df, col, span=3)
                 df[f"{col}_seasonal_ema_span_5"] = calculate_seasonal_ema(df, col, span=5)
                 df[f"{col}_seasonal_ema_span_8"] = calculate_seasonal_ema(df, col, span=8)
                 df[f"{col}_seasonal_ema_span_13"] = calculate_seasonal_ema(df, col, span=13)
-                df[f"{col}_seasonal_ema_span_21"] = calculate_seasonal_ema(df, col, span=21)
-                df[f"{col}_seasonal_ema_span_34"] = calculate_seasonal_ema(df, col, span=34)
-                df[f"{col}_seasonal_ema_span_55"] = calculate_seasonal_ema(df, col, span=55)
+                df[f"{col}_seasonal_ema_span_34"] = calculate_seasonal_ema(df, col, span=21)
+                df[f"{col}_seasonal_ema_span_55"] = calculate_seasonal_ema(df, col, span=21)
             return df
         else:
             return None
@@ -322,7 +345,7 @@ if __name__ == "__main__":
     preproc = Preprocessor("NHL")
     scraper = Scraper("NHL")
     scraper.download_nhl_team_data()
-    preproc.update_csv("all_games_preproc.csv")
+    preproc.update_csv()
 
 
     
