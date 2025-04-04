@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import shap
 from tqdm import tqdm
 from sklearn.utils import resample
-from sklearn.model_selection import train_test_split, RandomizedSearchCV, cross_val_score
+from sklearn.model_selection import train_test_split, GridSearchCV,RandomizedSearchCV, cross_val_score
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, log_loss, confusion_matrix, roc_auc_score, roc_curve, make_scorer
 from scipy.stats import uniform, randint
 
@@ -56,8 +56,8 @@ class NHLModelTrainer:
             'objective': 'multi:softprob',
             'eval_metric': "mlogloss",
             'booster': 'gbtree',
-            'learning_rate': 0.013,
-            'max_depth': 1,
+            'learning_rate': 0.02174751953126388,
+            'max_depth': 2,
             'num_class':2
             # 'lambda': 0.2,  # L2 regularization term
             # 'alpha': 0.1,  # L1 regularization term
@@ -68,15 +68,15 @@ class NHLModelTrainer:
             'eval_metric': 'mlogloss',  #  use 'error', 'auc', etc.
             'num_class': 2,
             'booster': 'gbtree',
-            'learning_rate': 0.013,#0.047454011884736254,
-            'max_depth':1
+            'learning_rate': 0.055784152872755864,#0.047454011884736254,
+            'max_depth':1,
         }
         self.ou_params = {
             'objective': 'multi:softprob',  # You can change this to multi-class if needed
             'eval_metric': 'mlogloss',  #  use 'error', 'auc', etc.
             'num_class': 2,
             'booster': 'gbtree',
-            'learning_rate': 0.02, #0.09583588048137198,
+            'learning_rate': 0.0103123138167671851, #0.09583588048137198,
             'max_depth':1
         }
         self.best_params = {
@@ -128,7 +128,7 @@ class NHLModelTrainer:
             tmp_model.fit(X, y)
             imp = pd.DataFrame({'Feature': X.columns, 'Importance': tmp_model.feature_importances_})
             imp.sort_values(by='Importance', ascending=False, inplace=True)
-            top_features = imp['Feature'].head(60)
+            top_features = imp['Feature'].head(90)
             if self.print_logs:
                 logging.info(f"[ML] Selected features: {list(top_features)}")
             X = X.loc[:, top_features]
@@ -148,7 +148,7 @@ class NHLModelTrainer:
             tmp_model.fit(X_temp, y)
             imp = pd.DataFrame({'Feature': X_temp.columns, 'Importance': tmp_model.feature_importances_})
             imp.sort_values(by='Importance', ascending=False, inplace=True)
-            top_features = imp['Feature'].head(60)
+            top_features = imp['Feature'].head(90)
             if self.print_logs:
                 logging.info(f"[spread] Selected features: {list(top_features)}")
             X = X.loc[:, top_features]
@@ -169,7 +169,7 @@ class NHLModelTrainer:
             tmp_model.fit(X_temp, y)
             imp = pd.DataFrame({'Feature': X_temp.columns, 'Importance': tmp_model.feature_importances_})
             imp.sort_values(by='Importance', ascending=False, inplace=True)
-            top_features = imp['Feature'].head(41)
+            top_features = imp['Feature'].head(60)
             if self.print_logs:
                 logging.info(f"[OU] Selected features: {list(top_features)}")
             X = X.loc[:, top_features]
@@ -304,25 +304,26 @@ class NHLModelTrainer:
         return best_num
 
 
-    def tune_hyperparameters(self, event, X, y, param_dist=None, cv=10, n_iter=20):
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-        X, y = balance_dataset(X_train, X_test, y_train, y_test, dmatrix=False)
-        model = xgb.XGBClassifier(objective="multi:softprob",
-                                  eval_metric="mlogloss",
-                                  num_class=2)
+    def tune_hyperparameters(self, event, X, y, param_dist=None, cv=5, n_iter=20):
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=46)
+        weight = len(y_train[y_train == 0]) / len(y_train[y_train == 1])
 
+        model = xgb.XGBClassifier(objective="binary:logistic", scale_pos_weight=weight)
         random_search = RandomizedSearchCV(
             estimator=model,
             param_distributions=param_dist,
-            cv=cv,
-            n_iter=n_iter,
-            verbose=1,
-            random_state=42,
+            n_iter=200,
+            cv=3,
+            scoring='accuracy',
+            verbose=3,
             n_jobs=-1,
-            scoring='neg_log_loss'
+            random_state=46, 
+            return_train_score=True
         )
 
         random_search.fit(X, y)
+
+        print(random_search.cv_results_)
 
         self.best_params[event] = random_search.best_params_
 
@@ -336,9 +337,10 @@ class NHLModelTrainer:
         predictions = best_model.predict(X_test)
         for z in predictions:
             y_pred.append(np.argmax(z))
-        acc = round(accuracy_score(y_test, y_pred)*100, 1)
+        acc = round(accuracy_score(y_test, predictions)*100, 1)
+        print(f"Testing accuracy: {acc}")
         if self.print_logs:
-            logging.info(f"Accuracy of {event} tuned model: {acc}")
+            logging.info(f"Accuracy of {event} tuned model: {random_search.best_score_}")
 
         model_filename = os.path.join(self.model_save_path, f"XGBoost_best_model.json")
         best_model.save_model(model_filename)
@@ -418,9 +420,15 @@ class NHLModelTrainer:
         # self.cross_validate(event, X, y)
         if tune == True:
             param_dist = {
-                "learning_rate": uniform(0.01, 0.1),
-                "max_depth": randint(1, 3),
-                "n_estimators": randint(100, 600)
+                'n_estimators': randint(100, 300),  # Number of trees
+                'max_depth': [1, 2],  # Maximum depth of trees
+                'learning_rate': uniform(0.01, 0.05),  # Learning rate (eta)
+                'reg_alpha': uniform(0, 1),  # L1 regularization (alpha)
+                'reg_lambda': uniform(0, 1),  # L2 regularization (lambda)
+                'subsample': uniform(0.5,0.5),
+                'colsample_bytree': uniform(0,1),
+                'min_child_weight' : [ 1, 3, 5, 7 ],
+                'gamma':uniform(0,1)
             }
 
             best_model = self.tune_hyperparameters(event, X, y, param_dist=param_dist)
@@ -433,9 +441,9 @@ class NHLModelTrainer:
 
 if __name__ == "__main__":
     trainer = NHLModelTrainer(problem_type="classification")
-    ou_model, _ = trainer.run_pipeline("ou", value=6.0)
+    ou_model, _ = trainer.run_pipeline("ou", value=6.5)
     ml_model, _ = trainer.run_pipeline("ml")
-    spread_model, _ = trainer.run_pipeline("spread", value=-1.5)
+    spread_model, _ = trainer.run_pipeline("spread", value=-0.5)
     ou_model = trainer.run_pipeline("ou", value=2.5)
     param_dist = None
     best_estimator = trainer.tune_hyperparameters(*trainer.preprocess("ml", trainer.load_data()), param_dist=param_dist)

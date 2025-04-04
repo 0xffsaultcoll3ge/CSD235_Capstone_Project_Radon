@@ -34,10 +34,16 @@ def get_float_features(df):
             feats.append(feat)
     return feats
 
-def download_file(url, sport, subject, gametype, path=None):
+def download_file(url, sport, subject, gametype=None, path=None):
     if path == None:
-        _dir = "./backend/data/{0}/{1}/{2}".format(sport, subject, gametype)
-        path = "./backend/data/{0}/{1}/{2}/{3}".format(sport, subject, gametype, url.split("/")[-1])
+        if sport == "NHL":
+            _dir = "./backend/data/{0}/{1}/{2}".format(sport, subject, gametype)
+            path = "./backend/data/{0}/{1}/{2}/{3}".format(sport, subject, gametype, url.split("/")[-1])
+        elif sport == "EPL":
+            _dir = "./backend/data/{0}/{1}/{2}".format(sport, subject)
+            path = "./backend/data/{0}/{1}/season/{2}/{3}".format(sport,subject,url.split("/")[-2], url.split("/")[-1])
+        else:
+            path = None
     try:
         r = requests.get(url)
         if r.status_code == 404:
@@ -57,6 +63,23 @@ class Scraper:
         self.sports = ["NHL"]
         if self.sport not in self.sports:
             raise Exception("Error during instantiation, invalid sport: {0}".format(self.sport))
+    # def download_epl_team_data():
+    #     # base_url = "https://www.football-data.co.uk/mmz4281/"
+    #     try:
+    #         start = 93
+    #         for i in range(0,31):
+    #             season_str = f"{start}{start + 1}/"
+    #             e_val = 0
+    #             for i in range(5):
+    #                 e_str = f"E{e_val}"
+    #                 season_url = base_url + season_str + e_str
+    #                 download_file("EPL", "games")
+    #             start += 1
+    #         return True
+    #     except Exception as e:
+    #         print(e)
+    #         return False
+
 
     def download_nhl_team_data(regular=True, playoff=True):
         try:
@@ -321,7 +344,7 @@ class Preprocessor:
 if __name__ == "__main__":  
     preproc = Preprocessor("NHL")
     scraper = Scraper("NHL")
-#    scraper.download_nhl_team_data()
+    scraper.download_nhl_team_data()
     preproc.update_csv()
 
 

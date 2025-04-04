@@ -167,7 +167,7 @@ class NHLModel:
             match_df['eloExpectedAgainst'] = 1 - match_df['eloExpectedFor']
 
             print(match_df["eloExpectedFor"])
-            print(match_df["eloExpectedFor"])
+            print( 1- match_df["eloExpectedFor"])
 
             return xgb.DMatrix(match_df[features])
         except Exception as e:
