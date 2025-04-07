@@ -72,22 +72,28 @@
 
         <!-- prediction buttons -->
         <div class="prediction-buttons">
-            <button id="get-prediction">Get Moneyline Prediction</button>
-            <button id="get-spread-prediction">Get Spread Prediction</button>
-            <button id="get-ou-prediction">Get Over/Under Prediction</button>
+            <button id="get-prediction">Predict ML</button>
+            <button id="get-spread-prediction">Predict Spread</button>
+            <button id="get-ou-prediction">Predict OU</button>
         </div>
 
         <!-- over under input -->
         <div class="ou-container">
             <label for="ou-value">Over/Under:</label>
-            <input type="number" id="ou-value" placeholder="Enter OU value" step="0.1" min="0">
+            <input type="number" id="ou-value" placeholder="OU VA" step="0.1" min="0">
+        </div>
+
+        <!-- spread input -->
+        <div class="spread-container"> 
+            <label for="spread-value">Spread:</label>
+            <input type="number" id="spread-value" placeholder="Spread VA" step="0.1" min="0">
         </div>
 
         <!-- results display -->
         <div class="prediction-results">
-            <div id="ml-result" class="result-box">Moneyline Prediction will appear here</div>
-            <div id="spread-result" class="result-box">Spread Prediction will appear here</div>
-            <div id="ou-result" class="result-box">Over/Under Prediction will appear here</div>
+            <div id="ml-result" class="result-box">ML RESULTS</div>
+            <div id="spread-result" class="result-box">SPREAD RESULTS</div> 
+            <div id="ou-result" class="result-box">OU RESULTS</div>
         </div>
     </div>
 
