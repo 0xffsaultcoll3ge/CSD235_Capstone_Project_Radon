@@ -3,7 +3,17 @@ import pandas as pd
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 import os
+import sys
+sys.path.insert(1, './backend/preprocess')
+from preprocess import *
 # from dotenv import load_dotenv
+
+def get_nhl_team_file(team_name, game_type):
+    path = f"./backend/data/NHL/teams/{game_type}/{team_name.upper()}.csv" 
+    if os.path.exists(path):
+        return path
+    else:
+        return None
 
 def get_table_csv(table_name, csv_map, update=False) -> pd.DataFrame:
     fpath = csv_map[table_name]
@@ -13,7 +23,7 @@ def get_table_csv(table_name, csv_map, update=False) -> pd.DataFrame:
         scraper.download_nhl_team_data()
         preproc.update_csv(fpath)
     return pd.read_csv(fpath)
-def create_table_map(tables, teams=None):
+def create_table_map(teams=None):
     mp = {}
     if teams == None:
         with open('team_files', 'r') as f:
@@ -37,6 +47,7 @@ def download_file(url, subject, gametype, path=None):
             for chunk in r.iter_content(chunk_size=1024):
                 if chunk:
                     f.write(chunk)
+                    
     except:
         print("Downloading {0} failed...".format(url))
 class NHLPipeline:
@@ -53,21 +64,22 @@ class NHLPipeline:
 
         try:
             if game_type == "regular":
-                download_file(regular_base_url,"regular", path=path)
+                download_file(regular_base_url,"teams","regular", path=path)
             else:
-                download_file(regular_base_url,"playoff", path=path)
+                download_file(regular_base_url,"teams", "playoff", path=path)
         except Exception as e:
             print(e)
 
     def update_team_table(self, team_name: str, table_name: str):
-        regular_fpath = self.download_team_csv(team_name, "regular")
-        playoff_fpath = self.download_team_csv(team_name, "playoff")
-
+        df = None
+        regular_fpath = get_nhl_team_file(team_name, "regular")
+        playoff_fpath = get_nhl_team_file(team_name, "playoff")
+        
         reg_df = pd.read_csv(regular_fpath)
-        playoff_df = pd.read_csv(playoff_fpath)
+        playoff_df = pd.DataFrame() if playoff_fpath == None else pd.read_csv(playoff_fpath)
         
         try:
-            df = pd.concat([reg_df, playoff_df]).sort_values(by="gameId").set_index("gameId")
+            df = reg_df if playoff_df.empty else pd.concat([reg_df, playoff_df]).sort_values(by="gameId").set_index("gameId")
             df.to_sql(table_name, con=self.engine, if_exists="append", index=False)
         except Exception as e:
             print(e)
@@ -79,17 +91,10 @@ class NHLPipeline:
                 print(f"An error occurred while trying to update table {table}: {e}")
     def preprocess_team_data(self, preproc_table: str):
         try:
-            team_df = preproc.update_csv()
+            team_df = self.preproc.update_csv()
             df.to_sql(preproc_table, con=self.engine, if_exists="append", index=False)
         except Exception as e:
             print(e)
-
-    def team_table_to_frame(self, table_name: str):
-        try:
-            return pd.read_sql(table_name, con=self.engine)
-        except Exception as e:
-            print(e)
-            return None
         
     def write_to_table(self, df: pd.DataFrame, table_name: str):
         try:
@@ -114,8 +119,7 @@ class NHLPipeline:
         return df
     def fetch_all_team_games(self, team_name):
         query = f'''
-        SELECT * FROM games WHERE
-        (team = '{team_name}' OR opposingTeam = '{team_name}')
+        SELECT * FROM {team_name}
         '''
         df = pd.read_sql_query(query, con=self.engine)
         return df

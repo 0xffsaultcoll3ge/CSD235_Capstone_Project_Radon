@@ -26,6 +26,7 @@ if __name__ == "__main__":
         
     print("Starting Node.js server...")
     node_process = run_node_server()
+    time.sleep(3)
     flask_process = run_flask_server()
     try:
         while True:
