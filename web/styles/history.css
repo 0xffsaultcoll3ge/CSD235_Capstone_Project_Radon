@@ -1,0 +1,122 @@
+/* history.css */
+
+/* Use common styles but add specific overrides where needed */
+
+/* General Body Styling */
+body {
+    background-color: #121826;
+    color: white;
+}
+
+/* history-wrapper styling */
+.history-wrapper {
+    margin: 20px;
+    padding: 20px;
+    background-color: #1A1F2E;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Heading styling */
+.history-wrapper h1 {
+    text-align: center;
+    color: #FFD700; /* Golden color to match theme */
+    font-size: 2rem;
+    margin-bottom: 20px;
+}
+
+/* Team selection section */
+.team-selection {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+#team-select {
+    padding: 10px;
+    font-size: 16px;
+    margin-right: 10px;
+    border: 1px solid #FFD700; /* Golden border */
+    background-color: #121826;
+    color: white;
+    border-radius: 5px;
+}
+
+button {
+    background-color: #E6B400; /* Match existing color */
+    color: #121826;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #F5B800;
+}
+
+/* History result box */
+.history-results {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+#history-result {
+    background-color: #1A1F2E;
+    color: white;
+    border-radius: 8px;
+    padding: 15px;
+    width: 90%;
+    height: 400px;
+    overflow-y: scroll;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.result-box {
+    background-color: #2D3446;
+    color: #FFD700; /* Highlighted golden text */
+    padding: 10px;
+    margin: 5px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.result-box pre {
+    font-family: "Courier New", Courier, monospace;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+/* Add some spacing and ensure the box scrolls */
+.history-results {
+    display: flex;
+    justify-content: center;
+}
+
+#history-result {
+    background-color: #1A1F2E;
+    color: white;
+    border-radius: 8px;
+    padding: 15px;
+    width: 90%;
+    height: 400px;
+    overflow-y: scroll;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Responsive styles to ensure readability on mobile */
+@media (max-width: 768px) {
+    .history-wrapper {
+        margin: 10px;
+        padding: 15px;
+    }
+
+    #history-result {
+        height: 300px;
+    }
+}
