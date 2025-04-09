@@ -69,6 +69,37 @@ class NHLModel:
             print(f"Error loading data: {e}")
             return None
 
+    def create_match_by_date(self, df: pd.DataFrame, home: str, away: str, date: int):
+        home_df = df[((df["team"] == home) | (df["opposingTeam"] == home)) & (df["gameDate"] < date)].tail(1)
+        away_df = df[((df["team"] == away) | (df["opposingTeam"] == away)) & (df["gameDate"] < date)].tail(1)
+
+        if home_df.empty or away_df.empty:
+            raise ValueError("No data found for the specified teams")
+
+        home_status = "home" if home_df.iloc[0]["team"] == home else "away"
+        away_status = "home" if away_df.iloc[0]["team"] == away else "away"
+
+        # Update EMAs
+        home_df = update_seasonal_ema(home_df)
+        away_df = update_seasonal_ema(away_df)
+
+        # Update Elo ratings
+        self.update_elo_ratings(home_df, away_df, home_status, away_status)
+
+        # Rename columns
+        home_df = self.rename_columns(home_df, home_status, is_home=True)
+        away_df = self.rename_columns(away_df, away_status, is_home=False)
+
+        # Select relevant columns
+        home_df = home_df[home_df.columns[home_df.columns.str.contains("For")]]
+        away_df = away_df[away_df.columns[away_df.columns.str.contains("Against")]]
+
+        # print(home_df)
+        # print(away_df)
+
+        ret = pd.concat([home_df.iloc[0], away_df.iloc[0]], axis=0)
+
+        return pd.DataFrame(ret).T
     def create_match(self, df: pd.DataFrame, home: str, away: str):
         home_df = df[(df["team"] == home) | (df["opposingTeam"] == home)].tail(1)
         away_df = df[(df["team"] == away) | (df["opposingTeam"] == away)].tail(1)
@@ -94,8 +125,8 @@ class NHLModel:
         home_df = home_df[home_df.columns[home_df.columns.str.contains("For")]]
         away_df = away_df[away_df.columns[away_df.columns.str.contains("Against")]]
 
-        print(home_df)
-        print(away_df)
+        # print(home_df)
+        # print(away_df)
 
         ret = pd.concat([home_df.iloc[0], away_df.iloc[0]], axis=0)
 
@@ -166,8 +197,8 @@ class NHLModel:
             match_df["eloExpectedFor"] = 1 / (1 + 10 ** ((match_df['eloAgainst'] - match_df['eloFor']) / 400))
             match_df['eloExpectedAgainst'] = 1 - match_df['eloExpectedFor']
 
-            print(match_df["eloExpectedFor"])
-            print( 1- match_df["eloExpectedFor"])
+            # print(match_df["eloExpectedFor"])
+            # print( 1- match_df["eloExpectedFor"])
 
             return xgb.DMatrix(match_df[features])
         except Exception as e:
@@ -184,18 +215,22 @@ class NHLModel:
             return self.predict(dmat)
         except Exception as e:
             print(e)
-    def kelly_criterion_result(self, bankroll: float, prob: float, ret: float) -> float:
-        return bankroll * kelly_fraction(prob, 1.0, ret)
+def kelly_criterion_result(bankroll: float, prob: float, ret: float) -> float:
+    return bankroll * kelly_fraction(prob, 1.0, ret)
+    
         
-        
-    def kelly_fraction(p: float, a: float, b: float) -> float:
-        q = 1 - p
-        return p / a - q / b
+def kelly_fraction(p: float, a: float, b: float) -> float:
+    q = 1 - p
+    return p / a - q / b
 
 def get_expect_result(p1: float, p2: float) -> float:
     exp = (p2 - p1) / 400.0
     return 1 / ((10.0 ** (exp)) + 1)
 
+def american_to_decimal(odds: int):
+    ret = (100 + -odds) / -odds if odds < 0 else (100 + odds) / 100
+
+    return ret
 
 if __name__ == "__main__":
     nhl_model = NHLModel("ml", model_path="./backend/model/models/XGBoot_57.8%_ML.json")

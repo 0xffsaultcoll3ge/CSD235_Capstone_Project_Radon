@@ -128,6 +128,19 @@ class NHLPipeline:
         """Fetch the last game data for a given team."""
         query = ""
         return self.cursor.fetchone()
+    
+    def fetch_recent_match(self, team_name, date):
+        query = f'''
+        SELECT * FROM games_preproc WHERE (gameDate < {date} AND (opposingTeam = "{team_name}" OR team = "{team_name}")) ORDER BY gameId DESC LIMIT 1
+        '''
+
+        df = pd.read_sql_query(query, con=self.engine)
+
+        return df
+    def fetch_query(self, query):
+        df = pd.read_sql_query(query, con=self.engine)
+
+        return df
     # def fetch_games_played_in_season(self, team_name):
 
     # def fetch_odds(self, team1, team2):
@@ -147,6 +160,7 @@ class NHLPipeline:
 
 if __name__ == "__main__":
     db = NHLPipeline()
-    df = pd.read_csv("all_games_preproc.csv")
-    df = db.write_to_table(df, "games_preproc")
+    # df = pd.read_csv("all_games_preproc.csv")
+    # df = db.write_to_table(df, "games_preproc")
+    df = db.fetch_recent_match("BOS", "20241004")
     print(df)

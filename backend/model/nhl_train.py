@@ -7,6 +7,7 @@ import logging
 import matplotlib.pyplot as plt
 import shap
 from tqdm import tqdm
+from sklearn.decomposition import PCA
 from sklearn.utils import resample
 from sklearn.model_selection import train_test_split, GridSearchCV,RandomizedSearchCV, cross_val_score
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, log_loss, confusion_matrix, roc_auc_score, roc_curve, make_scorer
@@ -53,31 +54,32 @@ class NHLModelTrainer:
         self.num_boost_round = num_boost_round
 
         self.ml_params = {
-            'objective': 'multi:softprob',
-            'eval_metric': "mlogloss",
+            'objective': 'binary:logistic',
+            'eval_metric': "logloss",
             'booster': 'gbtree',
-            'learning_rate': 0.02174751953126388,
-            'max_depth': 2,
-            'num_class':2
+            'learning_rate': 0.02146131074517304,
+            'max_depth': 2
             # 'lambda': 0.2,  # L2 regularization term
             # 'alpha': 0.1,  # L1 regularization term
             # 'scale_pos_weight': [1., 2, 3]  # for imbalanced classes
         }
         self.spread_params = {
-            'objective': 'multi:softprob',  # You can change this to multi-class if needed
-            'eval_metric': 'mlogloss',  #  use 'error', 'auc', etc.
-            'num_class': 2,
+            'objective': 'binary:logistic',  # You can change this to multi-class if needed
+            'eval_metric': 'logloss',
             'booster': 'gbtree',
             'learning_rate': 0.055784152872755864,#0.047454011884736254,
             'max_depth':1,
         }
         self.ou_params = {
-            'objective': 'multi:softprob',  # You can change this to multi-class if needed
-            'eval_metric': 'mlogloss',  #  use 'error', 'auc', etc.
-            'num_class': 2,
+            'objective': 'binary:logistic',  # You can change this to multi-class if needed
+            'eval_metric': 'logloss',
             'booster': 'gbtree',
-            'learning_rate': 0.0103123138167671851, #0.09583588048137198,
-            'max_depth':1
+            "learning_rate": 0.05597618515077609,
+            "max_depth": 2,
+            "min_child_weight": 5,
+            "n_estimators": 105,
+            "reg_alpha": 0.24733256123395508,
+            "subsample": 0.5965170681461052
         }
         self.best_params = {
             "ml": self.ml_params,
@@ -128,10 +130,13 @@ class NHLModelTrainer:
             tmp_model.fit(X, y)
             imp = pd.DataFrame({'Feature': X.columns, 'Importance': tmp_model.feature_importances_})
             imp.sort_values(by='Importance', ascending=False, inplace=True)
-            top_features = imp['Feature'].head(90)
+            top_features = imp['Feature'].head(60)
             if self.print_logs:
                 logging.info(f"[ML] Selected features: {list(top_features)}")
             X = X.loc[:, top_features]
+            # X = (X - X.mean())/X.std()
+            # pca = PCA(n_components=0.95, svd_solver="auto", whiten=False, random_state=42)
+            # X_pca = pca.fit_transform(X)
             return X, y
 
         elif event == "spread":
@@ -148,7 +153,7 @@ class NHLModelTrainer:
             tmp_model.fit(X_temp, y)
             imp = pd.DataFrame({'Feature': X_temp.columns, 'Importance': tmp_model.feature_importances_})
             imp.sort_values(by='Importance', ascending=False, inplace=True)
-            top_features = imp['Feature'].head(90)
+            top_features = imp['Feature'].head(60)
             if self.print_logs:
                 logging.info(f"[spread] Selected features: {list(top_features)}")
             X = X.loc[:, top_features]
@@ -173,6 +178,7 @@ class NHLModelTrainer:
             if self.print_logs:
                 logging.info(f"[OU] Selected features: {list(top_features)}")
             X = X.loc[:, top_features]
+            # X = (X - X.mean())/X.std()
             return X, y
         else:
             raise ValueError("Invalid event, please choose from: 'ml', 'spread', or 'ou'")
@@ -188,16 +194,16 @@ class NHLModelTrainer:
         acc_results = []
         for x in tqdm(range(iter), desc="Training NHL ML Model"):
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+            weight = len(y_train[y_train == 0]) / len(y_train[y_train == 1])
 
-            dtrain, dtest = balance_dataset(X_train, X_test, y_train, y_test)
+            dtrain = xgb.DMatrix(X_train, label=y_train)
+            dtest = xgb.DMatrix(X_test, label=y_test)
 
-            model = xgb.train(params, dtrain, epochs, num_boost_round=num_rounds)
+            params["scale_pos_weight"] = weight
+            model = xgb.train(params, dtrain, epochs)
             predictions = model.predict(dtest)
-            y_pred = []
-
-            for z in predictions:
-                y_pred.append(np.argmax(z))
-            acc = round(accuracy_score(y_test, y_pred)*100, 1)
+            y_pred = (predictions > 0.5).astype(int)
+            acc = round(accuracy_score(y_test, y_pred)*100, 2)
             print(f"ML Accuracy: {acc}")
             acc_results.append(acc)
 
@@ -223,13 +229,17 @@ class NHLModelTrainer:
             params['n_estimators'] = num_rounds
             for _ in tqdm(range(n_iter), desc=f"Training NHL Spread Model: {spread}"):
                 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
-                dtrain, dtest = balance_dataset(X_train, X_test, y_train, y_test)
+                weight = len(y_train[y_train == 0]) / len(y_train[y_train == 1])
+
+                dtrain = xgb.DMatrix(X_train, label=y_train)
+                dtest = xgb.DMatrix(X_test, label=y_test)
+
+                params["scale_pos_weight"] = weight
                 model = xgb.train(params, dtrain, epochs)
-                y_pred = []
+
                 predictions = model.predict(dtest)
-                for z in predictions:
-                    y_pred.append(np.argmax(z))
-                acc = round(accuracy_score(y_test, y_pred)*100, 1)
+                y_pred = (predictions > 0.5).astype(int)
+                acc = round(accuracy_score(y_test, y_pred)*100, 2)
                 print(f"Spread Accuracy: {acc}%")
                 acc_results.append(acc)
                 if acc == max(acc_results):
@@ -252,13 +262,18 @@ class NHLModelTrainer:
             params["n_estimators"] = num_rounds
             for _ in tqdm(range(n_iter), desc="Training OU Model"):
                 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
-                dtrain, dtest = balance_dataset(X_train, X_test, y_train, y_test)
+                
+                weight = len(y_train[y_train == 0]) / len(y_train[y_train == 1])
+                dtrain = xgb.DMatrix(X_train, label=y_train)
+                dtest = xgb.DMatrix(X_test, label=y_test)
+
+                params["scale_pos_weight"] = weight
                 model = xgb.train(params, dtrain, epochs)
-                y_pred = []
+
                 predictions = model.predict(dtest)
-                for z in predictions:
-                    y_pred.append(np.argmax(z))
-                acc = round(accuracy_score(y_test, y_pred)*100, 1)
+                y_pred = (predictions > 0.5).astype(int)
+                acc = round(accuracy_score(y_test, y_pred)*100, 2)
+
                 print(f"OU Accuracy: {acc}%")
                 acc_results.append(acc)
                 if acc == max(acc_results):
@@ -293,9 +308,9 @@ class NHLModelTrainer:
             num_boost_round=1000,
             nfold=5,
             early_stopping_rounds=20,
-            metrics={'mlogloss'}
+            metrics={'logloss'}
         )
-        best_num = cv_results['test-mlogloss-mean'].idxmin()  # Find best boosting round
+        best_num = cv_results['test-logloss-mean'].idxmin()  # Find best boosting round
         if self.print_logs:
             logging.info(f"Determined optimal number of rounds for {event} model")
             logging.info(f"Boosting rounds: {best_num}")
@@ -304,7 +319,7 @@ class NHLModelTrainer:
         return best_num
 
 
-    def tune_hyperparameters(self, event, X, y, param_dist=None, cv=5, n_iter=20):
+    def tune_hyperparameters(self, event, value, X, y, param_dist=None, cv=5, n_iter=20):
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=46)
         weight = len(y_train[y_train == 0]) / len(y_train[y_train == 1])
 
@@ -321,7 +336,7 @@ class NHLModelTrainer:
             return_train_score=True
         )
 
-        random_search.fit(X, y)
+        random_search.fit(X_train, y_train)
 
         print(random_search.cv_results_)
 
@@ -329,8 +344,9 @@ class NHLModelTrainer:
 
         if self.print_logs:
             logging.info(f"Best hyperparameters for {event}: {json.dumps(self.best_params[event], indent=4)}")
-
-        self.save_params(self.best_params[event], os.path.join(self.model_save_path, f"hyperparameter_{event}.json"))
+        hyperparam_file = lambda event, value: f"hyperparameters_{event}_{value}.json" if value != None else f"hyperparameters_{event}.json"
+        save_path = lambda event, value: os.path.join(self.model_save_path, event, str(value)) if value != None else os.path.join(self.model_save_path, event)
+        self.save_params(self.best_params[event], os.path.join(save_path(event,value), hyperparam_file(event, value)))
 
         best_model = random_search.best_estimator_
         y_pred = []
@@ -338,11 +354,12 @@ class NHLModelTrainer:
         for z in predictions:
             y_pred.append(np.argmax(z))
         acc = round(accuracy_score(y_test, predictions)*100, 1)
+        score = 100 * random_search.best_score_
         print(f"Testing accuracy: {acc}")
         if self.print_logs:
-            logging.info(f"Accuracy of {event} tuned model: {random_search.best_score_}")
+            logging.info(f"Accuracy of {event} tuned model: {score}")
 
-        model_filename = os.path.join(self.model_save_path, f"XGBoost_best_model.json")
+        model_filename = os.path.join(save_path(event, value), f"XGBoost_tuned_{score:.2f}.json")
         best_model.save_model(model_filename)
         logging.info(f"Best model saved at {model_filename}")
 
@@ -424,14 +441,16 @@ class NHLModelTrainer:
                 'max_depth': [1, 2],  # Maximum depth of trees
                 'learning_rate': uniform(0.01, 0.05),  # Learning rate (eta)
                 'reg_alpha': uniform(0, 1),  # L1 regularization (alpha)
-                'reg_lambda': uniform(0, 1),  # L2 regularization (lambda)
+                # 'reg_lambda': uniform(0, 1),  # L2 regularization (lambda)
                 'subsample': uniform(0.5,0.5),
-                'colsample_bytree': uniform(0,1),
+                # 'colsample_bytree': uniform(0,1),
                 'min_child_weight' : [ 1, 3, 5, 7 ],
-                'gamma':uniform(0,1)
+                # 'gamma':uniform(0,1),
+                # 'colsample_bynode':uniform(0,1),
+                # 'colsample_bylevel':uniform(0,1)
             }
 
-            best_model = self.tune_hyperparameters(event, X, y, param_dist=param_dist)
+            best_model = self.tune_hyperparameters(event, value, X, y, param_dist=param_dist)
             self.best_models[event] = best_model
         model = self.train_event(event, X, y, value, epochs_override)
         self.save_visualizations(event, X, value=value)
@@ -442,7 +461,8 @@ class NHLModelTrainer:
 if __name__ == "__main__":
     trainer = NHLModelTrainer(problem_type="classification")
     ou_model, _ = trainer.run_pipeline("ou", value=6.5)
-    ml_model, _ = trainer.run_pipeline("ml")
+    ml_model, _ = trainer.run_pipeline("ml")  
+    spread_model, _ = trainer.run_pipeline("spread", value=-1.5) 
     spread_model, _ = trainer.run_pipeline("spread", value=-0.5)
     ou_model = trainer.run_pipeline("ou", value=2.5)
     param_dist = None
