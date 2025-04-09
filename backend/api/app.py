@@ -22,6 +22,12 @@ from flask_login import LoginManager
 from models import User, db
 from auth import auth_bp
 
+from flask import request, jsonify
+from subscriptions import create_subscription
+
+
+
+
 load_dotenv()
 
 
@@ -230,7 +236,9 @@ def train_nhl_update():
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'success': False})
+    
 
+<<<<<<< HEAD
 @app.route('/api/nhl/teams/data')
 def get_team_data():
     team = request.args.get('team')
@@ -238,6 +246,26 @@ def get_team_data():
 
     return jsonify(df.to_dict('records', index=True))
 
+=======
+# STRIPE
+    
+@app.route('/api/stripe/subscription', methods=['POST'])
+def create_embedded_subscription():
+    data = request.json
+    email = data.get('email')
+    price_id = data.get('price_id')
+    
+    if not email or not price_id:
+        return jsonify({"error": "Missing email or price_id"}), 400
+
+    try:
+        result = create_subscription(email, price_id)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    
+>>>>>>> 618b1b11904d0db0be2814803f9164309fef85d8
 
 with app.app_context():
     db.create_all()
