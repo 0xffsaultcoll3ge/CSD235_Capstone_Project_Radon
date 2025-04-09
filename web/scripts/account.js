@@ -209,4 +209,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // check session on page load
     checkUserSession();
+
+    
 });
