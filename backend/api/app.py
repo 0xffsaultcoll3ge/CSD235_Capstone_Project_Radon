@@ -7,6 +7,7 @@ import pandas as pd
 import sys
 
 
+
 sys.path.insert(1, 'backend/model')
 sys.path.insert(2, 'backend/db')
 sys.path.insert(3, './backend/api')
@@ -50,7 +51,7 @@ MODEL_DIR = "./backend/model/models/" #os.getenv("MODEL_DIR")
 
 nhl_trainer = NHLModelTrainer()
 nhl_pipeline = NHLPipeline()
-nhl_ml_model = NHLModel("ml", model_path="./backend/model/models/ML/XGBoost_59.1%_ML.json")
+nhl_ml_model = NHLModel("ml", model_path="./backend/model/models/ML/XGBoost_59.0%_ML.json")
 #NHLModel("ml", model_path=best_model_path("ML", MODEL_DIR))
 nhl_ou_model = lambda ou: NHLModel("ou", model_path = best_model_path("ou", MODEL_DIR, ou))
 nhl_spread_model = lambda spread: NHLModel("spread", model_path = best_model_path("spread", MODEL_DIR, spread))
@@ -236,9 +237,8 @@ def train_nhl_update():
         return jsonify({'success': True})
     except Exception as e:
         return jsonify({'success': False})
-    
 
-<<<<<<< HEAD
+
 @app.route('/api/nhl/teams/data')
 def get_team_data():
     team = request.args.get('team')
@@ -246,7 +246,7 @@ def get_team_data():
 
     return jsonify(df.to_dict('records', index=True))
 
-=======
+
 # STRIPE
     
 @app.route('/api/stripe/subscription', methods=['POST'])
@@ -265,7 +265,6 @@ def create_embedded_subscription():
         return jsonify({"error": str(e)}), 500
 
     
->>>>>>> 618b1b11904d0db0be2814803f9164309fef85d8
 
 with app.app_context():
     db.create_all()
