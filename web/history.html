@@ -25,14 +25,12 @@
         </div>
     </nav>
 
-    <!-- Account Dropdown -->
+    <!-- account dropdown -->
     <div class="dropdown-menu" id="accountDropdown">
         <div id="userDisplay">Account</div>
-
-        <!-- Subscription status (hidden until logged in) -->
         <div id="subscriptionStatus" style="display: none;"></div>
 
-        <!-- Login Form -->
+        <!-- login form -->
         <div id="authForms">
             <input type="email" id="loginEmail" placeholder="Email">
             <input type="password" id="loginPassword" placeholder="Password">
@@ -40,7 +38,7 @@
             <button id="showRegister">Register</button>
         </div>
 
-        <!-- Registration Form -->
+        <!-- registration form -->
         <div id="registerForm" style="display: none;">
             <input type="text" id="registerFirstName" placeholder="First Name">
             <input type="text" id="registerLastName" placeholder="Last Name">
@@ -50,10 +48,9 @@
             <button id="showLogin">Back to Login</button>
         </div>
 
-        <!-- Logout Button (hidden until logged in) -->
         <button id="logoutButton" style="display: none;">Logout</button>
     </div>
-    
+
     <div class="history-wrapper">
         <h1>Team History</h1>
 
@@ -67,7 +64,12 @@
 
         <!-- results display -->
         <div class="history-results">
-            <div id="history-result" class="result-box"></div>
+            <div id="history-result" class="result-box">
+                <table id="history-table">
+                    <thead></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
     </div>
 

@@ -2,7 +2,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     const AUTH_API = "http://localhost:5000/api/user";
 
     const teamSelect = document.getElementById("team-select");
-    const historyResult = document.getElementById("history-result");
+    const historyTableHead = document.querySelector("#history-table thead");
+    const historyTableBody = document.querySelector("#history-table tbody");
     const getHistoryBtn = document.getElementById("get-history");
 
     if (!teamSelect) {
@@ -11,7 +12,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     /**
-     * fills the team dropdown with all team options
+     * fills the dropdown menus with team abbreviations
+     * each dropdown starts with a default "select team" option
+     * adds all nhl teams as options
      */
     function fillTeamDropdown() {
         const teams = [
@@ -27,56 +30,97 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     /**
-     * fetches the historical data for the selected team
+     * fetches team history from the backend and renders it as a table
+     * splits large data into chunks and renders them asynchronously
      */
     async function fetchTeamHistory() {
         const team = teamSelect.value;
 
         if (!team) {
-            historyResult.textContent = "Please select a team.";
+            alert("Please select a team.");
             return;
         }
 
         try {
             const response = await fetch(`http://localhost:5000/api/nhl/teams/data?team=${team}`);
             const data = await response.json();
-            
-            // displaying team history data in the scrollable box
-            historyResult.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+
+            historyTableHead.innerHTML = "";
+            historyTableBody.innerHTML = "";
+
+            const records = Array.isArray(data) ? data : Object.values(data);
+            const chunkSize = 10;
+            let index = 0;
+
+            if (records.length === 0) {
+                historyTableBody.innerHTML = "<tr><td colspan='100%'>No history found.</td></tr>";
+                return;
+            }
+
+            /**
+             * creates table headers dynamically from the first record
+             */
+            const keys = Object.keys(records[0]);
+            const headerRow = document.createElement("tr");
+            keys.forEach(key => {
+                const th = document.createElement("th");
+                th.textContent = key;
+                headerRow.appendChild(th);
+            });
+            historyTableHead.appendChild(headerRow);
+
+            /**
+             * renders rows in chunks for performance
+             */
+            function renderChunk() {
+                const chunk = records.slice(index, index + chunkSize);
+                chunk.forEach(record => {
+                    const row = document.createElement("tr");
+                    keys.forEach(key => {
+                        const td = document.createElement("td");
+                        td.textContent = record[key];
+                        row.appendChild(td);
+                    });
+                    historyTableBody.appendChild(row);
+                });
+
+                index += chunkSize;
+                if (index < records.length) {
+                    setTimeout(renderChunk, 100);
+                }
+            }
+
+            renderChunk();
         } catch (error) {
-            historyResult.textContent = "Error fetching team history.";
+            historyTableBody.innerHTML = "<tr><td colspan='100%'>Error fetching history.</td></tr>";
             console.error(error);
         }
     }
 
     /**
-     * checks if the user is subscribed
-     * fetches user data from the backend api
-     * if the user is not subscribed, redirects them to the pricing page
-     * saves user data in session storage for future use
+     * checks if the user is subscribed before allowing access
+     * redirects to pricing page if not subscribed
      */
     async function checkSubscription() {
         try {
-            const response = await fetch(AUTH_API, { credentials: "include" }); // sends request with credentials
-            if (!response.ok) throw new Error("failed to fetch user data.");
+            const response = await fetch(AUTH_API, { credentials: "include" });
+            if (!response.ok) throw new Error("Failed to fetch user data.");
 
-            const user = await response.json(); // parses the json data
+            const user = await response.json();
 
             if (!user.is_subscribed) {
-                window.location.href = "pricing.html"; // redirects to pricing page if not subscribed
+                window.location.href = "pricing.html";
                 return;
             }
 
-            sessionStorage.setItem("currentUser", JSON.stringify(user)); // stores user data in session storage
+            sessionStorage.setItem("currentUser", JSON.stringify(user));
         } catch (error) {
             console.error("error checking subscription:", error);
-            window.location.href = "pricing.html"; // redirects if error occurs
+            window.location.href = "pricing.html";
         }
     }
 
     getHistoryBtn.addEventListener("click", fetchTeamHistory);
-
-    // check subscription status first, then fill the team dropdown and enable history functionality
     await checkSubscription();
     fillTeamDropdown();
 });
