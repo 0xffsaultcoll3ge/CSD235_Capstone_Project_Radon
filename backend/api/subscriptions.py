@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 load_dotenv() 
 
 logging.getLogger("stripe").setLevel(logging.WARNING)
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
@@ -16,7 +18,7 @@ def create_subscription(email, price_id):
         customer=customer.id,
         items=[{"price": price_id}],
         payment_behavior="default_incomplete",
-        expand=["latest_invoice.payment_intent"],
+        expand=["latest_invoice", "latest_invoice.payment_intent"],
     )
 
     payment_intent = subscription.latest_invoice.payment_intent
