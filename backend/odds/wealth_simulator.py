@@ -54,8 +54,8 @@ spread_models = {k: (lambda k: nhl_spread_model(k))(k) for k in spread_vals}
 # print(merged)
 
 
-def simulate(game_df: pd.DataFrame, odds_df: pd.DataFrame, frac = 1/4, event="ml", value=None):
-    bankroll = 500
+def simulate(game_df: pd.DataFrame, odds_df: pd.DataFrame, frac = 1/8, event="ml", value=None):
+    bankroll = 1000
     dates = []
     totals = []
     if event == "ml":
@@ -87,10 +87,8 @@ def simulate(game_df: pd.DataFrame, odds_df: pd.DataFrame, frac = 1/4, event="ml
 
             total =  bankroll if len(totals) == 0 else totals[-1]
 
-
-
-            kelly_home_ml = frac * kelly_criterion_result(total, ml_pred, home_ml_odds - 1)
-            kelly_away_ml = frac * kelly_criterion_result(total, 1 - ml_pred, away_ml_odds - 1)
+            kelly_home_ml = frac * kelly_criterion_result(total, ml_pred[: , 1], home_ml_odds - 1)
+            kelly_away_ml = frac * kelly_criterion_result(total, 1 - ml_pred[: , 0], away_ml_odds - 1)
 
             if kelly_home_ml > 0:
                 add = kelly_home_ml * (home_ml_odds - 1) if (game_row["winner"] == 1.0).any() else -kelly_home_ml
@@ -108,14 +106,26 @@ def simulate(game_df: pd.DataFrame, odds_df: pd.DataFrame, frac = 1/4, event="ml
         return dates,[item.item() if isinstance(item, np.ndarray) else item for item in totals]
 
     elif event == "ou":
-        return None
+        ou_model = ou_models[value]
+def simuate_vec(game_df: pd.DataFrame, odds_df: pd.DataFrame, frac = 1/8, event="ml", value=None):
+    gameIds = [np.nan] * len(odds_df)
+    kelly_ml_home = [np.nan] * len(odds_df)
+    kelly_ml_away = [np.nan] * len(odds_df)
+    ou = [np.nan] * len(odds_df)
+    spread_home = [np.nan] * len(odds_df)
+    spready_away = [np.nan] * len(odds_df)
+    kelly_ou_home = [np.nan] * len(odds_df)
+    kelly_ou_away = [np.nan] * len(odds_df)
+    kelly_spread_home = [np.nan] * len(odds_df)
+    kelly_spread_away = [np.nan] * len(odds_df)
 
 
+def running_total(model, df,)
 
 
 game_df = pd.read_csv("all_games_preproc.csv")
 
-dates, totals = simulate(game_df, odds_df[odds_df["season"].astype(int) == 2021])
+dates, totals = simulate(game_df, odds_df[odds_df["season"].astype(int) == 2019])
 print(totals)
 plt.figure(figsize=(10, 5))
 plt.plot(dates, totals, marker='o', linestyle='-', color='blue')

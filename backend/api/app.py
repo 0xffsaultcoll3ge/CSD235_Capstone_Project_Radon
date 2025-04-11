@@ -44,8 +44,8 @@ MODEL_DIR = "./backend/model/models/" #os.getenv("MODEL_DIR")
 
 nhl_trainer = NHLModelTrainer()
 nhl_pipeline = NHLPipeline()
-nhl_ml_model = NHLModel("ml", model_path="./backend/model/models/ML/XGBoost_59.1%_ML.json")
-#NHLModel("ml", model_path=best_model_path("ML", MODEL_DIR))
+#nhl_ml_model = NHLModel("ml", model_path="./backend/model/models/ML/XGBoost_59.1%_ML.json")
+nhl_ml_model = NHLModel("ml", model_path=best_model_path("ML", MODEL_DIR))
 nhl_ou_model = lambda ou: NHLModel("ou", model_path = best_model_path("ou", MODEL_DIR, ou))
 nhl_spread_model = lambda spread: NHLModel("spread", model_path = best_model_path("spread", MODEL_DIR, spread))
 
@@ -86,7 +86,6 @@ def get_predictions_ou():
     except Exception as e:
         return jsonify({"error":str(e)}), 500
 
-    return jsonify({"predictions":predictions.tolist()}), 200
 @app.route('/api/nhl/spread/predict', methods=['GET'])
 def get_predictions_spread():
     try:
@@ -99,7 +98,6 @@ def get_predictions_spread():
     except Exception as e:
         return jsonify({"error":str(e)}), 500
 
-    return jsonify({"predictions":predictions.tolist()}), 200
 
 @app.route('/api/nhl/odds/{gameId}')
 def get_game_odds():

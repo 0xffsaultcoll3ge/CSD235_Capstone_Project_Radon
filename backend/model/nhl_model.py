@@ -6,6 +6,10 @@ sys.path.insert(1, './backend/preprocess')
 import elo
 import pandas as pd
 import os
+import json
+import numpy as np
+def get_objective(booster: xgb.Booster) -> str:
+    return json.loads(booster.save_config())["learner"]["objective"]["name"]
 
 def update_seasonal_ema(df: pd.DataFrame):
     ema_columns = [col for col in df.columns if re.match(r'.*_seasonal_ema_span_\d+', col)]
@@ -187,7 +191,13 @@ class NHLModel:
                 return df.rename(columns=lambda col: col.replace('For', 'Against') if 'For' in col \
                 else col.replace('Against', 'For') if 'Against' in col else  col)
     def predict(self, X):
-        return self.model.predict(X)
+        if get_objective(self.model) == "multi:softprob":
+            return self.model.predict(X)
+        elif get_objective(self.model) == "binary:logistic":
+            pred = self.model.predict(X)
+            return np.stack([1 - pred, pred], axis=1)
+        else:
+            return None
     def get_feature_names(self):
         return self.model.feature_names
     def convert_to_dmatrix(self, match_df: pd.DataFrame) -> xgb.DMatrix:
