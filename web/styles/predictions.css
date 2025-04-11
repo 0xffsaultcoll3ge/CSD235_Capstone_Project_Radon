@@ -14,6 +14,7 @@
     font-size: 24px;
     margin-bottom: 20px;
 }
+
 .team-selection {
     display: flex;
     justify-content: center;
@@ -65,16 +66,20 @@ button {
 button:hover {
     background-color: #e6c200;
 }
-.ou-container {
+
+.ou-container,
+.spread-container { 
     margin-bottom: 20px;
 }
 
-.ou-container label {
+.ou-container label,
+.spread-container label { 
     font-size: 16px;
     color: white;
 }
 
-.ou-container input {
+.ou-container input,
+.spread-container input { 
     background-color: #12122b;
     color: white;
     border: 2px solid #ffd700;
@@ -86,7 +91,8 @@ button:hover {
     text-align: center;
 }
 
-.ou-container input::placeholder {
+.ou-container input::placeholder,
+.spread-container input::placeholder {
     color: #a8a8a8;
 }
 

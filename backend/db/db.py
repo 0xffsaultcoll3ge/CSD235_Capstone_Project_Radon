@@ -8,6 +8,13 @@ sys.path.insert(1, './backend/preprocess')
 from preprocess import *
 # from dotenv import load_dotenv
 
+def get_nhl_team_file(team_name, game_type):
+    path = f"./backend/data/NHL/teams/{game_type}/{team_name.upper()}.csv" 
+    if os.path.exists(path):
+        return path
+    else:
+        return None
+
 def get_table_csv(table_name, csv_map, update=False) -> pd.DataFrame:
     fpath = csv_map[table_name]
     if table_name == "games_preproc" and update:
@@ -40,6 +47,7 @@ def download_file(url, subject, gametype, path=None):
             for chunk in r.iter_content(chunk_size=1024):
                 if chunk:
                     f.write(chunk)
+                    
     except:
         print("Downloading {0} failed...".format(url))
 class NHLPipeline:
@@ -63,14 +71,15 @@ class NHLPipeline:
             print(e)
 
     def update_team_table(self, team_name: str, table_name: str):
-        regular_fpath = self.download_team_csv(team_name, "regular")
-        playoff_fpath = self.download_team_csv(team_name, "playoff")
-
+        df = None
+        regular_fpath = get_nhl_team_file(team_name, "regular")
+        playoff_fpath = get_nhl_team_file(team_name, "playoff")
+        
         reg_df = pd.read_csv(regular_fpath)
-        playoff_df = pd.read_csv(playoff_fpath)
+        playoff_df = pd.DataFrame() if playoff_fpath == None else pd.read_csv(playoff_fpath)
         
         try:
-            df = pd.concat([reg_df, playoff_df]).sort_values(by="gameId").set_index("gameId")
+            df = reg_df if playoff_df.empty else pd.concat([reg_df, playoff_df]).sort_values(by="gameId").set_index("gameId")
             df.to_sql(table_name, con=self.engine, if_exists="append", index=False)
         except Exception as e:
             print(e)
@@ -86,13 +95,6 @@ class NHLPipeline:
             df.to_sql(preproc_table, con=self.engine, if_exists="append", index=False)
         except Exception as e:
             print(e)
-
-    def team_table_to_frame(self, table_name: str):
-        try:
-            return pd.read_sql(table_name, con=self.engine)
-        except Exception as e:
-            print(e)
-            return None
         
     def write_to_table(self, df: pd.DataFrame, table_name: str):
         try:
@@ -117,8 +119,7 @@ class NHLPipeline:
         return df
     def fetch_all_team_games(self, team_name):
         query = f'''
-        SELECT * FROM games WHERE
-        (team = '{team_name}' OR opposingTeam = '{team_name}')
+        SELECT * FROM {team_name}
         '''
         df = pd.read_sql_query(query, con=self.engine)
         return df
@@ -147,5 +148,5 @@ class NHLPipeline:
 if __name__ == "__main__":
     db = NHLPipeline()
     df = pd.read_csv("all_games_preproc.csv")
-    df = db.write_to_table(df)
+    df = db.write_to_table(df, "games_preproc")
     print(df)

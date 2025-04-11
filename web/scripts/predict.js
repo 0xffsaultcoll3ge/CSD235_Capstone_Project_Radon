@@ -4,10 +4,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     const homeSelect = document.getElementById("home-team");
     const awaySelect = document.getElementById("away-team");
     const ouInput = document.getElementById("ou-value");
+    const spreadInput = document.getElementById("spread-value"); 
     const predictionResult = document.getElementById("ml-result");
     const ouResult = document.getElementById("ou-result");
+    const spreadResult = document.getElementById("spread-result"); 
     const getPredictionBtn = document.getElementById("get-prediction");
     const getOUPredictionBtn = document.getElementById("get-ou-prediction");
+    const getSpreadPredictionBtn = document.getElementById("get-spread-prediction"); 
 
     if (!homeSelect || !awaySelect) {
         console.error("dropdown elements not found!");
@@ -119,9 +122,42 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     }
 
+    /**
+     * fetches the spread prediction based on selected teams and the user entered value
+     * sends request to the backend api with teams and spread value as query parameters
+     * displays the probability of spread outcomes
+     */
+
+    async function fetchSpreadPrediction() {
+        const home = homeSelect.value;
+        const away = awaySelect.value;
+        const spreadValue = spreadInput.value;
+    
+        if (!home || !away || !spreadValue) {
+            spreadResult.textContent = "please select both teams and enter a spread value.";
+            return;
+        }
+    
+        try {
+            const response = await fetch(`http://localhost:5000/api/nhl/ml/predict?home=${home}&away=${away}`);
+            const data = await response.json();
+            const [homeWinProb, awayWinProb] = data.predictions[0];
+    
+            spreadResult.innerHTML = `
+                <p><strong>${home} win probability with spread ${spreadValue}:</strong> ${(homeWinProb * 100).toFixed(2)}%</p>
+                <p><strong>${away} win probability with spread ${spreadValue}:</strong> ${(awayWinProb * 100).toFixed(2)}%</p>
+            `;
+        } catch (error) {
+            spreadResult.textContent = "error fetching spread prediction.";
+            console.error(error);
+        }
+    }
+    
+
     // adds event listeners to the buttons for fetching predictions
     getPredictionBtn.addEventListener("click", fetchPrediction);
     getOUPredictionBtn.addEventListener("click", fetchOUPrediction);
+    getSpreadPredictionBtn.addEventListener("click", fetchSpreadPrediction); // added event listener for spread
 
     // fills dropdown menus first, then checks subscription status
     fillTeamDropdowns();
