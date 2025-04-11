@@ -260,6 +260,13 @@ def create_embedded_subscription():
 
     try:
         result = create_subscription(email, price_id)
+        # update user subscription status in the database
+        user = User.query.filter_by(email=email).first()
+        if user:
+            user.is_subscribed = True
+            db.session.commit()
+        else:
+            return jsonify({"error": "User not found"}), 404
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
