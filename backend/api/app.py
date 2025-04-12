@@ -7,6 +7,7 @@ import pandas as pd
 import sys
 
 
+
 sys.path.insert(1, 'backend/model')
 sys.path.insert(2, 'backend/db')
 sys.path.insert(3, './backend/api')
@@ -21,6 +22,12 @@ from auth import auth_bp
 from flask_login import LoginManager
 from models import User, db
 from auth import auth_bp
+
+from flask import request, jsonify
+from subscriptions import create_subscription
+
+
+
 
 load_dotenv()
 
@@ -44,8 +51,10 @@ MODEL_DIR = "./backend/model/models/" #os.getenv("MODEL_DIR")
 
 nhl_trainer = NHLModelTrainer()
 nhl_pipeline = NHLPipeline()
+
 #nhl_ml_model = NHLModel("ml", model_path="./backend/model/models/ML/XGBoost_59.1%_ML.json")
 nhl_ml_model = NHLModel("ml", model_path=best_model_path("ML", MODEL_DIR))
+
 nhl_ou_model = lambda ou: NHLModel("ou", model_path = best_model_path("ou", MODEL_DIR, ou))
 nhl_spread_model = lambda spread: NHLModel("spread", model_path = best_model_path("spread", MODEL_DIR, spread))
 
@@ -229,6 +238,7 @@ def train_nhl_update():
     except Exception as e:
         return jsonify({'success': False})
 
+
 @app.route('/api/nhl/teams/data')
 def get_team_data():
     team = request.args.get('team')
@@ -237,9 +247,35 @@ def get_team_data():
     return jsonify(df.to_dict('records', index=True))
 
 
+# STRIPE
+    
+@app.route('/api/stripe/subscription', methods=['POST'])
+def create_embedded_subscription():
+    data = request.json
+    email = data.get('email')
+    price_id = data.get('price_id')
+    
+    if not email or not price_id:
+        return jsonify({"error": "Missing email or price_id"}), 400
+
+    try:
+        result = create_subscription(email, price_id)
+        # update user subscription status in the database
+        user = User.query.filter_by(email=email).first()
+        if user:
+            user.is_subscribed = True
+            db.session.commit()
+        else:
+            return jsonify({"error": "User not found"}), 404
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    
+
 with app.app_context():
     db.create_all()
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True)  
