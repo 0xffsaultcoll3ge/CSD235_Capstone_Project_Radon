@@ -153,6 +153,11 @@ class Preprocessor:
         if self.sport == "NHL" and self.subject == "teams":
             df = df[df["situation"] == "all"]
             df["winner"] = np.where(df["goalsFor"] > df["goalsAgainst"], 1.0, 0.0)
+            df["streak"] = (df["winner"] != df["winner"].shift()).cumsum()
+            df['winStreakFor'] = df.groupby('streak')['winner'].transform('size')
+            df['winStreakFor'] = df.apply(lambda row: row['winStreakFor'] if row['winner'] == 1 else 0, axis=1)
+            df = df.drop(columns=["streak"])
+            df['winStreakFor'] = df['winStreakFor'].shift()
             df["goalDiffFor"] = df["goalsFor"] - df["goalsAgainst"]
             df["winRateFor"] = df.groupby("season")["winner"].transform(lambda x: x.expanding().mean())
             #http://article.sapub.org/10.5923.j.sports.20140403.02.html
@@ -167,12 +172,15 @@ class Preprocessor:
     def ema_df(self, df):
         if self.sport == "NHL" and self.subject == "teams":
             for col in get_float_features(df):
+                if "winStreak" in col:
+                    continue
                 df[f"{col}_seasonal_ema_span_3"] = calculate_seasonal_ema(df, col, span=3)
                 df[f"{col}_seasonal_ema_span_5"] = calculate_seasonal_ema(df, col, span=5)
                 df[f"{col}_seasonal_ema_span_8"] = calculate_seasonal_ema(df, col, span=8)
                 df[f"{col}_seasonal_ema_span_13"] = calculate_seasonal_ema(df, col, span=13)
-                df[f"{col}_seasonal_ema_span_34"] = calculate_seasonal_ema(df, col, span=21)
-                df[f"{col}_seasonal_ema_span_55"] = calculate_seasonal_ema(df, col, span=21)
+                df[f"{col}_seasonal_ema_span_21"] = calculate_seasonal_ema(df, col, span=21)
+                df[f"{col}_seasonal_ema_span_34"] = calculate_seasonal_ema(df, col, span=34)
+                df[f"{col}_seasonal_ema_span_55"] = calculate_seasonal_ema(df, col, span=55)
             return df
         else:
             return None
@@ -338,13 +346,13 @@ class Preprocessor:
         team_df = team_df.loc[:, ~team_df.columns.str.contains('^Unnamed')]
         team_df = self.apply_elo_rating(team_df, K=32, decay=0.01)
         team_df.to_csv("all_games_preproc.csv")
+        
         return team_df
-        #write to database when finished, change function name
 
 if __name__ == "__main__":  
     preproc = Preprocessor("NHL")
-    scraper = Scraper("NHL")
-    scraper.download_nhl_team_data()
+    # scraper = Scraper("NHL")
+    # scraper.download_nhl_team_data()
     preproc.update_csv()
 
 
