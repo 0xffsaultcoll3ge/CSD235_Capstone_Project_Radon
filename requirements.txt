@@ -22,6 +22,7 @@ fastjsonschema==2.21.1
 Flask==3.1.0
 flask-cors==5.0.1
 Flask-Login==0.6.3
+Flask-SQLAlchemy==3.1.1
 Flask-SSO==0.4.0
 flatbuffers==25.2.10
 fonttools==4.56.0
