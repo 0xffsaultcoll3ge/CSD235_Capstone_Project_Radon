@@ -106,21 +106,8 @@ def simulate(game_df: pd.DataFrame, odds_df: pd.DataFrame, frac = 1/8, event="ml
         return dates,[item.item() if isinstance(item, np.ndarray) else item for item in totals]
 
     elif event == "ou":
-        ou_model = ou_models[value]
-def simuate_vec(game_df: pd.DataFrame, odds_df: pd.DataFrame, frac = 1/8, event="ml", value=None):
-    gameIds = [np.nan] * len(odds_df)
-    kelly_ml_home = [np.nan] * len(odds_df)
-    kelly_ml_away = [np.nan] * len(odds_df)
-    ou = [np.nan] * len(odds_df)
-    spread_home = [np.nan] * len(odds_df)
-    spready_away = [np.nan] * len(odds_df)
-    kelly_ou_home = [np.nan] * len(odds_df)
-    kelly_ou_away = [np.nan] * len(odds_df)
-    kelly_spread_home = [np.nan] * len(odds_df)
-    kelly_spread_away = [np.nan] * len(odds_df)
-
-
-def running_total(model, df,)
+        # ou_model = ou_models[value]
+        return None
 
 
 game_df = pd.read_csv("all_games_preproc.csv")
