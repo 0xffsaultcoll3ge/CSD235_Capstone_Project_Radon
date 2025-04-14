@@ -7,6 +7,65 @@ document.addEventListener("DOMContentLoaded", function () {
   const modal = document.getElementById("successModal");
   const paymentContainer = document.getElementById("payment-element-container");
 
+
+  //unsubscribe button
+  //  Check user subscription status on load
+(async () => {
+  let user = JSON.parse(sessionStorage.getItem("currentUser"));
+
+  // If missing or not subscribed, fetch fresh data
+  if (!user || user.is_subscribed === undefined) {
+    try {
+      const res = await fetch("http://localhost:5000/api/user", {
+        method: "GET",
+        credentials: "include"
+      });
+
+      const data = await res.json();
+      if (data.email) {
+        user = data;
+        sessionStorage.setItem("currentUser", JSON.stringify(user));
+      }
+    } catch (err) {
+      console.error("Error fetching user info:", err);
+    }
+  }
+
+  if (user && user.is_subscribed) {
+    subscribeButton.innerText = "Unsubscribe";
+    subscribeButton.disabled = false;
+    subscribeButton.style.opacity = "1";
+
+    subscribeButton.addEventListener("click", async () => {
+      const confirmed = confirm("Are you sure you want to cancel your subscription?");
+      if (!confirmed) return;
+
+      try {
+        const res = await fetch("http://localhost:5000/api/stripe/cancel", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: user.email })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+          alert("Subscription canceled.");
+          sessionStorage.setItem("currentUser", JSON.stringify({ ...user, is_subscribed: false }));
+          window.location.reload();
+        } else {
+          alert("Failed to cancel subscription.");
+        }
+      } catch (err) {
+        alert("Error canceling subscription.");
+        console.error(err);
+      }
+    });
+    return; 
+  }
+})();
+
+
+
   const showLoader = () => loader.style.display = "flex";
   const hideLoader = () => loader.style.display = "none";
 
@@ -91,6 +150,19 @@ document.addEventListener("DOMContentLoaded", function () {
     } else if (paymentIntent?.status === "succeeded") {
       modal.classList.add("show");
       modal.style.display = "flex";
+    //Refresh user session
+      try {
+        const res = await fetch("http://localhost:5000/api/user", {
+          method: "GET",
+          credentials: "include"
+        });
+        const updatedUser = await res.json();
+        if (updatedUser.email) {
+          sessionStorage.setItem("currentUser", JSON.stringify(updatedUser));
+        }
+      } catch (err) {
+        console.error("Failed to refresh user session:", err);
+      }
 
       setTimeout(() => {
         window.location.href = "predictions.html";

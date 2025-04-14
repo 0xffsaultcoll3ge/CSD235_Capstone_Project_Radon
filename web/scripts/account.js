@@ -111,7 +111,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 currentUser = data.user;
                 sessionStorage.setItem("currentUser", JSON.stringify(currentUser));
                 updateAccountUI();
+                sessionStorage.setItem("currentUser", JSON.stringify(data.user));
                 alert(data.message);
+                window.location.reload(); 
+
             } else {
                 alert(data.error);
             }
@@ -184,6 +187,7 @@ document.addEventListener("DOMContentLoaded", () => {
             sessionStorage.removeItem("currentUser");
             updateAccountUI();
             alert(data.message);
+            window.location.reload(); 
         } catch (error) {
             alert("An error occurred. Please try again.");
             console.error(error);
