@@ -25,6 +25,7 @@ from auth import auth_bp
 
 from flask import request, jsonify
 from subscriptions import create_subscription
+from subscriptions import cancel_subscription
 
 
 
@@ -247,10 +248,10 @@ def get_team_data():
     return jsonify(df.to_dict('records', index=True))
 
 
-# STRIPE
+# ENDPOINTS FOR STRIPE
     
 @app.route('/api/stripe/subscription', methods=['POST'])
-def create_embedded_subscription():
+def create_embedded_subscription(): 
     data = request.json
     email = data.get('email')
     price_id = data.get('price_id')
@@ -270,6 +271,20 @@ def create_embedded_subscription():
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route('/api/stripe/cancel', methods=['POST'])
+def cancel_user_subscription():
+    data = request.get_json()
+    email = data.get("email")
+
+    if not email:
+        return jsonify({"error": "Email required"}), 400
+
+    success, error = cancel_subscription(email)
+    if success:
+        return jsonify({"success": True})
+    else:
+        return jsonify({"error": error}), 400
 
     
 
