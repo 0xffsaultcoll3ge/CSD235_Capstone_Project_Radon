@@ -55,7 +55,7 @@ class NHLModelTrainer:
 
         self.ml_params = {
             'objective': 'binary:logistic',
-            'eval_metric': "logloss",
+            'eval_metric': "auc_pr",
             'booster': 'gbtree',
             'learning_rate': 0.02146131074517304,
             'max_depth': 2
@@ -65,21 +65,21 @@ class NHLModelTrainer:
         }
         self.spread_params = {
             'objective': 'binary:logistic',  # You can change this to multi-class if needed
-            'eval_metric': 'logloss',
+            'eval_metric': "auc_pr",
             'booster': 'gbtree',
             'learning_rate': 0.055784152872755864,#0.047454011884736254,
             'max_depth':1,
         }
         self.ou_params = {
             'objective': 'binary:logistic',  # You can change this to multi-class if needed
-            'eval_metric': 'logloss',
+            'eval_metric': "auc_pr",
             'booster': 'gbtree',
-            "learning_rate": 0.05597618515077609,
+            "learning_rate": 0.03856269963252939,
             "max_depth": 2,
-            "min_child_weight": 5,
-            "n_estimators": 105,
-            "reg_alpha": 0.24733256123395508,
-            "subsample": 0.5965170681461052
+            "min_child_weight": 3,
+            "n_estimators": 123,
+            "reg_alpha": 0.3956729259944567,
+            "subsample": 0.9240337065369795
         }
         self.best_params = {
             "ml": self.ml_params,
@@ -102,11 +102,13 @@ class NHLModelTrainer:
 
     def load_params(self, event, filename):
         if not os.path.exists(filename):
-            raise ValueError(f"Hyperparameters file not found: {filename}")
+            if self.print_logs:
+                logging.info(f"Hyperparameters file not found: {filename}")
+            return None
         with open(filename, "r") as f:
             params = json.load(f)
             if params != None:
-                self.best_params[event] = params
+                return params
         if self.print_logs:
             logging.info(f"Hyperparameters loaded from {filename}")
         return params
@@ -118,6 +120,14 @@ class NHLModelTrainer:
         return df
 
     def preprocess(self, event, df, value=None, team=None):
+        path = os.path.join(self.model_save_path, f"{event}/hyperparameters_ml.json") if event == "ml" else \
+        os.path.join(self.model_save_path, f"{event}/{value}/hyperparameters_{event}_{value}.json")
+
+        params = self.load_params(event,path)
+        if params != None:
+            for k,v in params.items():
+                self.best_params[event][k] = v
+        self.best_params[event]["objective"] = "binary:logistic"
         if event == "ml":
             df = df.dropna()
             if team != None:
@@ -187,7 +197,6 @@ class NHLModelTrainer:
         ### Separate function
         params = self.best_params["ml"]
         num_rounds = self.best_num_boost_round("ml", X, y)
-        params['n_estimators'] = num_rounds
 
         best_model = None
         epochs = epochs_override if epochs_override is not None else 750
@@ -200,7 +209,7 @@ class NHLModelTrainer:
             dtest = xgb.DMatrix(X_test, label=y_test)
 
             params["scale_pos_weight"] = weight
-            model = xgb.train(params, dtrain, epochs)
+            model = xgb.train(params, dtrain, epochs, num_boost_round=num_rounds)
             predictions = model.predict(dtest)
             y_pred = (predictions > 0.5).astype(int)
             acc = round(accuracy_score(y_test, y_pred)*100, 2)
@@ -208,6 +217,8 @@ class NHLModelTrainer:
             acc_results.append(acc)
 
             if acc == max(acc_results):
+                if self.print_logs:
+                    self.evaluate(y_test, y_pred)
                 if team != None:
                     if not os.path.exists(f"./backend/model/models/ML/{team}"):
                         os.makedirs(f"./backend/model/models/ML/{team}")
@@ -226,7 +237,6 @@ class NHLModelTrainer:
             epochs = epochs_override if epochs_override is not None else 750
             params = self.best_params["spread"]
             num_rounds = self.best_num_boost_round("spread", X, y)
-            params['n_estimators'] = num_rounds
             for _ in tqdm(range(n_iter), desc=f"Training NHL Spread Model: {spread}"):
                 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
                 weight = len(y_train[y_train == 0]) / len(y_train[y_train == 1])
@@ -235,7 +245,7 @@ class NHLModelTrainer:
                 dtest = xgb.DMatrix(X_test, label=y_test)
 
                 params["scale_pos_weight"] = weight
-                model = xgb.train(params, dtrain, epochs)
+                model = xgb.train(params, dtrain, epochs, num_boost_round=num_rounds)
 
                 predictions = model.predict(dtest)
                 y_pred = (predictions > 0.5).astype(int)
@@ -247,6 +257,8 @@ class NHLModelTrainer:
                     os.makedirs(save_dir, exist_ok=True)
                     model.save_model(os.path.join(save_dir, f"XGBoost_{acc}%_spread_{spread}.json"))
                     best_model = model
+                    if self.print_logs:
+                        self.evaluate(y_test, y_pred)
             return best_model, max(acc_results)
         except Exception as e:
             print(e)
@@ -259,16 +271,14 @@ class NHLModelTrainer:
             epochs = epochs_override if epochs_override is not None else 750
             params = self.best_params["ou"]
             num_rounds = self.best_num_boost_round("ou", X, y)
-            params["n_estimators"] = num_rounds
             for _ in tqdm(range(n_iter), desc="Training OU Model"):
                 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
                 
                 weight = len(y_train[y_train == 0]) / len(y_train[y_train == 1])
                 dtrain = xgb.DMatrix(X_train, label=y_train)
                 dtest = xgb.DMatrix(X_test, label=y_test)
-
                 params["scale_pos_weight"] = weight
-                model = xgb.train(params, dtrain, epochs)
+                model = xgb.train(params, dtrain, epochs, num_boost_round=num_rounds)
 
                 predictions = model.predict(dtest)
                 y_pred = (predictions > 0.5).astype(int)
@@ -281,12 +291,15 @@ class NHLModelTrainer:
                     os.makedirs(save_dir, exist_ok=True)
                     model.save_model(os.path.join(save_dir, f"XGBoost_{acc}%_ou_{ou}.json"))
                     best_model = model
+                    if self.print_logs:
+                        self.evaluate(y_test, y_pred)
             return best_model, max(acc_results)
         except Exception as e:
             print(e)
             return None
 
     def train_event(self, event, X, y, value=None, epochs_override=None):
+
         if event == "ml":
             return self.train_ml(X, y)
         elif event == "spread":
@@ -323,13 +336,15 @@ class NHLModelTrainer:
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=46)
         weight = len(y_train[y_train == 0]) / len(y_train[y_train == 1])
 
-        model = xgb.XGBClassifier(objective="binary:logistic", scale_pos_weight=weight)
+        model = xgb.XGBClassifier(objective="binary:logistic",
+         scale_pos_weight=weight)
         random_search = RandomizedSearchCV(
             estimator=model,
             param_distributions=param_dist,
             n_iter=200,
             cv=3,
-            scoring='accuracy',
+            scoring=['neg_log_loss', 'roc_auc','balanced_accuracy'],
+            refit='roc_auc',
             verbose=3,
             n_jobs=-1,
             random_state=46, 
@@ -339,8 +354,8 @@ class NHLModelTrainer:
         random_search.fit(X_train, y_train)
 
         print(random_search.cv_results_)
-
         self.best_params[event] = random_search.best_params_
+        self.best_params["objective"] = "binary:logistic"
 
         if self.print_logs:
             logging.info(f"Best hyperparameters for {event}: {json.dumps(self.best_params[event], indent=4)}")
@@ -354,6 +369,7 @@ class NHLModelTrainer:
         for z in predictions:
             y_pred.append(np.argmax(z))
         acc = round(accuracy_score(y_test, predictions)*100, 1)
+        print(confusion_matrix(y_test, predictions))
         score = 100 * random_search.best_score_
         print(f"Testing accuracy: {acc}")
         if self.print_logs:
@@ -364,50 +380,67 @@ class NHLModelTrainer:
         logging.info(f"Best model saved at {model_filename}")
 
         return best_model
-    def evaluate(self, event, y_true, y_pred, y_pred_proba=None):
+    def evaluate(self,y_true, y_pred, y_pred_proba=None):
         acc = accuracy_score(y_true, y_pred)
         prec = precision_score(y_true, y_pred, average="weighted")
         rec = recall_score(y_true, y_pred, average="weighted")
         f1 = f1_score(y_true, y_pred, average="weighted")
         cm = confusion_matrix(y_true, y_pred)
-        auc = None #implement later
-        if y_pred_proba is not None and isinstance(y_pred_proba, np.ndarray) and y_pred_proba.ndim == 2:
-            y_score = y_pred_proba[:, 1] if y_pred_proba.shape[1] == 2 else y_pred_proba
+
+        logloss = None
+        roc_auc = roc_auc_score(y_true, y_pred)
+
+        if y_pred_proba is not None:
             try:
-                auc = roc_auc_score(y_true, y_score, multi_class="ovr")
+                logloss = log_loss(y_true, y_pred_proba)
             except Exception as e:
-                logging.warning(f"AUC computation failed: {e}")
-        metrics = {"Accuracy": acc, "Precision": prec, "Recall": rec, "F1-score": f1,
-                   "Confusion Matrix": cm, "AUC-ROC": auc}
+                logging.warning(f"LogLoss computation failed: {e}")
+
+            try:
+                # Binary or multiclass ROC AUC
+                roc_auc = roc_auc_score(y_true, y_pred_proba, multi_class="ovr" if len(np.unique(y_true)) > 2 else None)
+            except Exception as e:
+                logging.warning(f"ROC AUC computation failed: {e}")
+
+        metrics = {
+            "Accuracy": acc,
+            "Precision": prec,
+            "Recall": rec,
+            "F1-score": f1,
+            "Confusion Matrix": cm,
+            "Log Loss": logloss,
+            "ROC AUC": roc_auc
+        }
+
         logging.info(json.dumps(metrics, indent=4, default=str))
         print("Evaluation Metrics:")
         for k, v in metrics.items():
             print(f"{k}: {v}")
-        return metrics
 
+        return metrics
     def cross_validate(self, event, X, y, cv=5, scoring='accuracy'):
         if event != "ml":
             logging.warning("Cross-validation is implemented for 'ml' only; using ml_params.")
         scores = cross_val_score(xgb.XGBClassifier(**self.ml_params), X, y, cv=cv, scoring=scoring)
         logging.info(f"Cross-validation accuracy: {scores.mean():.4f} (+/- {scores.std():.4f})")
         return scores
-    def save_visualizations(self, event, X, value=None):
+    def save_visualizations(self, event, X,y, value=None):
         filename_prefix = f"{event}_{value}"
         if self.model_save_path is None:
             return
         if self.best_models.get(event) is not None:
             model = self.best_models[event]
-            imp = model.get_score(importance_type='weight')
-            imp_df = pd.DataFrame(imp.items(), columns=['Feature', 'Importance']).sort_values(by='Importance', ascending=False)
-            plt.figure(figsize=(10,6))
-            plt.barh(imp_df['Feature'].head(20), imp_df['Importance'].head(20))
-            plt.xlabel("Importance")
-            plt.title("Top 20 Feature Importances")
-            fi_filename = os.path.join(self.model_save_path, f"{filename_prefix}_feature_importance.png")
-            plt.savefig(fi_filename)
-            plt.close()
+            # imp = model.get_score(importance_type='weight')
+            # imp_df = pd.DataFrame(imp.items(), columns=['Feature', 'Importance']).sort_values(by='Importance', ascending=False)
+            # plt.figure(figsize=(10,6))
+            # plt.barh(imp_df['Feature'].head(20), imp_df['Importance'].head(20))
+            # plt.xlabel("Importance")
+            # plt.title("Top 20 Feature Importances")
+            # fi_filename = os.path.join(self.model_save_path, f"{filename_prefix}_feature_importance.png")
+            # plt.savefig(fi_filename)
+            # plt.close()
 
-            logging.info(f"Feature importance plot saved at {fi_filename}")
+            # logging.info(f"Feature importance plot saved at {fi_filename}")
             
             explainer = shap.Explainer(model)
             shap_values = explainer(X)
@@ -417,8 +450,9 @@ class NHLModelTrainer:
             plt.close()
 
             logging.info(f"SHAP summary plot saved at {shap_filename}")
-
-            fpr, tpr, _ = roc_curve(np.argmax(X.values, axis=1), np.random.rand(X.shape[0]))
+            
+            y_pred = model.predict_proba(X)[:, 1]
+            fpr, tpr, _ = roc_curve(y, y_pred)
             plt.figure(figsize=(8,6))
             plt.plot(fpr, tpr, label="ROC curve")
             plt.xlabel("False Positive Rate")
@@ -438,13 +472,13 @@ class NHLModelTrainer:
         if tune == True:
             param_dist = {
                 'n_estimators': randint(100, 300),  # Number of trees
-                'max_depth': [1, 2],  # Maximum depth of trees
-                'learning_rate': uniform(0.01, 0.05),  # Learning rate (eta)
+                'max_depth': [1, 2, 3],  # Maximum depth of trees
+                'learning_rate': uniform(0.01, 0.03),  # Learning rate (eta)
                 'reg_alpha': uniform(0, 1),  # L1 regularization (alpha)
-                # 'reg_lambda': uniform(0, 1),  # L2 regularization (lambda)
-                'subsample': uniform(0.5,0.5),
+                'reg_lambda': uniform(0, 1),  # L2 regularization (lambda)
+                'subsample': uniform(0.5,0.5)
                 # 'colsample_bytree': uniform(0,1),
-                'min_child_weight' : [ 1, 3, 5, 7 ],
+                # 'min_child_weight' : [ 1, 3, 5, 7 ],
                 # 'gamma':uniform(0,1),
                 # 'colsample_bynode':uniform(0,1),
                 # 'colsample_bylevel':uniform(0,1)
@@ -453,17 +487,22 @@ class NHLModelTrainer:
             best_model = self.tune_hyperparameters(event, value, X, y, param_dist=param_dist)
             self.best_models[event] = best_model
         model = self.train_event(event, X, y, value, epochs_override)
-        self.save_visualizations(event, X, value=value)
+        self.save_visualizations(event, X,y, value=value)
         self.models[event] = model
         self.best_models[event] = model
         return model, None
 
 if __name__ == "__main__":
     trainer = NHLModelTrainer(problem_type="classification")
+    ou_model, _ = trainer.run_pipeline("ou", value=5.0)
+    ou_model, _ = trainer.run_pipeline("ou", value=5.5)
+    ou_model, _ = trainer.run_pipeline("ou", value=6.0)
     ou_model, _ = trainer.run_pipeline("ou", value=6.5)
-    ml_model, _ = trainer.run_pipeline("ml")  
-    spread_model, _ = trainer.run_pipeline("spread", value=-1.5) 
-    spread_model, _ = trainer.run_pipeline("spread", value=-0.5)
-    ou_model = trainer.run_pipeline("ou", value=2.5)
+    spread_model, _ = trainer.run_pipeline("spread", value=1.5)
+    spread_model, _ = trainer.run_pipeline("spread", value=2.5)
+    spread_model, _ = trainer.run_pipeline("spread", value=-1.5)
+    spread_model, _ = trainer.run_pipeline("spread", value=-2.5)
+    spread_model, _ = trainer.run_pipeline("spread", value=1.5)
+    ml_model, _ = trainer.run_pipeline("ml")
     param_dist = None
     best_estimator = trainer.tune_hyperparameters(*trainer.preprocess("ml", trainer.load_data()), param_dist=param_dist)
