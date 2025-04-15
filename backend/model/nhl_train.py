@@ -55,7 +55,7 @@ class NHLModelTrainer:
 
         self.ml_params = {
             'objective': 'binary:logistic',
-            'eval_metric': "auc_pr",
+            'eval_metric': "logloss",
             'booster': 'gbtree',
             'learning_rate': 0.02146131074517304,
             'max_depth': 2
@@ -65,14 +65,14 @@ class NHLModelTrainer:
         }
         self.spread_params = {
             'objective': 'binary:logistic',  # You can change this to multi-class if needed
-            'eval_metric': "auc_pr",
+            'eval_metric': "logloss",
             'booster': 'gbtree',
             'learning_rate': 0.055784152872755864,#0.047454011884736254,
             'max_depth':1,
         }
         self.ou_params = {
             'objective': 'binary:logistic',  # You can change this to multi-class if needed
-            'eval_metric': "auc_pr",
+            'eval_metric': "logloss",
             'booster': 'gbtree',
             "learning_rate": 0.03856269963252939,
             "max_depth": 2,
@@ -415,7 +415,11 @@ class NHLModelTrainer:
         logging.info(json.dumps(metrics, indent=4, default=str))
         print("Evaluation Metrics:")
         for k, v in metrics.items():
-            print(f"{k}: {v}")
+            if k == "Confusion Matrix":
+                print(f"{k}")
+                print(v)
+            else:
+                print(f"{k}: {v}")
 
         return metrics
     def cross_validate(self, event, X, y, cv=5, scoring='accuracy'):
