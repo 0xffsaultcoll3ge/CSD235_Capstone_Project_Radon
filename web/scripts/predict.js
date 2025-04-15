@@ -83,8 +83,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             const [homeWinProb, awayWinProb] = data.predictions[0];
 
             predictionResult.innerHTML = `
-                <p><strong>${home} win probability:</strong> ${(homeWinProb * 100).toFixed(2)}%</p>
-                <p><strong>${away} win probability:</strong> ${(awayWinProb * 100).toFixed(2)}%</p>
+                <p><strong>${home} Win probability:</strong> ${(homeWinProb * 100).toFixed(2)}%</p>
+                <p><strong>${away} Win probability:</strong> ${(awayWinProb * 100).toFixed(2)}%</p>
             `;
         } catch (error) {
             predictionResult.textContent = "error fetching ml prediction.";
@@ -113,8 +113,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             const [underProb, overProb] = data.predictions[0];
 
             ouResult.innerHTML = `
-                <p><strong>over ${ouValue} probability:</strong> ${(overProb * 100).toFixed(1)}%</p>
-                <p><strong>under ${ouValue} probability:</strong> ${(underProb * 100).toFixed(1)}%</p>
+                <p><strong> Over ${ouValue} probability:</strong> ${(overProb * 100).toFixed(1)}%</p>
+                <p><strong> Under ${ouValue} probability:</strong> ${(underProb * 100).toFixed(1)}%</p>
             `;
         } catch (error) {
             ouResult.textContent = "error fetching ou prediction.";
@@ -139,13 +139,13 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     
         try {
-            const response = await fetch(`http://localhost:5000/api/nhl/ml/predict?home=${home}&away=${away}`);
+            const response = await fetch(`http://localhost:5000/api/nhl/spread/predict?home=${home}&away=${away}&spread=${spreadValue}`);
             const data = await response.json();
             const [homeWinProb, awayWinProb] = data.predictions[0];
     
             spreadResult.innerHTML = `
-                <p><strong>${home} win probability with spread ${spreadValue}:</strong> ${(homeWinProb * 100).toFixed(2)}%</p>
-                <p><strong>${away} win probability with spread ${spreadValue}:</strong> ${(awayWinProb * 100).toFixed(2)}%</p>
+                <p><strong> Probability of ${home} covering spread ${spreadValue} is:</strong> ${(homeWinProb * 100).toFixed(2)}%</p>
+                <p><strong> Probability of ${away} covering spread ${spreadValue} is :</strong> ${(awayWinProb * 100).toFixed(2)}%</p>
             `;
         } catch (error) {
             spreadResult.textContent = "error fetching spread prediction.";
