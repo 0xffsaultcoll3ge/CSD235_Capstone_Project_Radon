@@ -128,8 +128,10 @@ class NHLModelTrainer:
             for k,v in params.items():
                 self.best_params[event][k] = v
         self.best_params[event]["objective"] = "binary:logistic"
+        df = df[df["gameId"].astype(int) <= 2018020001 ]
         if event == "ml":
             df = df.dropna()
+            df = df.drop(columns=df.columns[df.columns.str.contains('winner_seasonal_ema_span')])
             if team != None:
                 df = df[df["team"] == team]
             df = df[df["goalDiffFor"] != 0]
@@ -274,10 +276,10 @@ class NHLModelTrainer:
             for _ in tqdm(range(n_iter), desc="Training OU Model"):
                 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
                 
-                weight = len(y_train[y_train == 0]) / len(y_train[y_train == 1])
+                # weight = len(y_train[y_train == 0]) / len(y_train[y_train == 1])
                 dtrain = xgb.DMatrix(X_train, label=y_train)
                 dtest = xgb.DMatrix(X_test, label=y_test)
-                params["scale_pos_weight"] = weight
+                # params["scale_pos_weight"] = weight
                 model = xgb.train(params, dtrain, epochs, num_boost_round=num_rounds)
 
                 predictions = model.predict(dtest)
@@ -344,7 +346,7 @@ class NHLModelTrainer:
             n_iter=200,
             cv=3,
             scoring=['neg_log_loss', 'roc_auc','balanced_accuracy'],
-            refit='roc_auc',
+            refit='balanced_accuracy',
             verbose=3,
             n_jobs=-1,
             random_state=46, 
@@ -498,6 +500,7 @@ class NHLModelTrainer:
 
 if __name__ == "__main__":
     trainer = NHLModelTrainer(problem_type="classification")
+    ml_model, _ = trainer.run_pipeline("ml")
     ou_model, _ = trainer.run_pipeline("ou", value=5.0)
     ou_model, _ = trainer.run_pipeline("ou", value=5.5)
     ou_model, _ = trainer.run_pipeline("ou", value=6.0)
