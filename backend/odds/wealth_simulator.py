@@ -169,7 +169,7 @@ def simulate(game_df: pd.DataFrame, odds_df: pd.DataFrame, frac = 1/8, event="ml
             if game_row.empty:
                 continue
 
-            match_df = ou_model.create_match_by_date(game_df, row["home_team"], row["away_team"], int(row["date"]))
+            match_df = spread_model.create_match_by_date(game_df, row["home_team"], row["away_team"], int(row["date"]))
 
             dmat = spread_model_home.convert_to_dmatrix(match_df)
             pred = spread_model.predict(dmat)
@@ -205,7 +205,7 @@ def simulate(game_df: pd.DataFrame, odds_df: pd.DataFrame, frac = 1/8, event="ml
 
 game_df = pd.read_csv("all_games_preproc.csv")
 
-dates, totals = simulate(game_df, odds_df[odds_df["season"].astype(int) == 2018], event="ml")
+dates, totals = simulate(game_df, odds_df[odds_df["season"].astype(int) == 2018], event="spread")
 print(totals)
 plt.figure(figsize=(10, 5))
 plt.plot(dates, totals, marker='o', linestyle='-', color='blue')
