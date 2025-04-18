@@ -156,9 +156,9 @@ def simulate(game_df: pd.DataFrame, odds_df: pd.DataFrame, frac = 1/8, event="ml
     elif event == "spread":
         for i in range(len(odds_df)):
             row = odds_df.iloc[i]
-            home_spread = row["home_point_spread"]
+            value = row["home_point_spread"]
 
-            spread_model_home = spread_models[str(home_spread)]
+            spread_model = spread_models[str(value)]
             row = odds_df.iloc[i]
             game_row = game_df[
                 (game_df['season'].astype(str) == row['season']) &
@@ -171,29 +171,33 @@ def simulate(game_df: pd.DataFrame, odds_df: pd.DataFrame, frac = 1/8, event="ml
 
             match_df = spread_model.create_match_by_date(game_df, row["home_team"], row["away_team"], int(row["date"]))
 
-            dmat = spread_model_home.convert_to_dmatrix(match_df)
+            dmat = spread_model.convert_to_dmatrix(match_df)
             pred = spread_model.predict(dmat)
 
-            odds_home = round(american_to_decimal(row['home_point_spread']), 2)
-            odds_away = round(american_to_decimal(row['away_point_spread']), 2)
+            odds_home = round(american_to_decimal(row['home_point_spread_line']), 2)
+            odds_away = round(american_to_decimal(row['away_point_spread_line']), 2)
 
             total =  bankroll if len(totals) == 0 else totals[-1]
 
-            kelly_over = frac * kelly_criterion_result(total, pred[: , 1], over_odds - 1)
-            kelly_under = frac * kelly_criterion_result(total, pred[: , 0], under_odds - 1)
+            kelly_over = frac * kelly_criterion_result(total, pred[: , 1], odds_home - 1)
+            kelly_under = frac * kelly_criterion_result(total, pred[: , 0], odds_away - 1)
 
             if kelly_over > 0:
-                add = kelly_over * (over_odds - 1) if (game_row["goalDiffFor"] > value).any() else -kelly_over
+                add = kelly_over * (odds_home - 1) if (game_row["goalDiffFor"] > -value).any() else -kelly_over
                 totals.append(total + add)
                 dates.append(game_row["gameDate"].iloc[0])
             else:
                 if kelly_under > 0:
-                    add = kelly_under * (under_odds - 1) if (game_row["goalDiffFor"] < value).any() else -kelly_under
+                    add = kelly_under * (odds_away - 1) if (game_row["goalDiffFor"] < -value).any() else -kelly_under
                     totals.append(total + add)
                     dates.append(game_row["gameDate"].iloc[0])
             # if i > 100:
             #     dates = [datetime.strptime(str(date), "%Y%m%d") for date in dates]
             #     return dates,[item.item() if isinstance(item, np.ndarray) else item for item in totals]
+            print(f"Game: {row['home_team']} vs {row['away_team']}, Date: {row['date']}")
+            print(f"Predicted probs: Home {pred[:,1]}, Away {pred[:,0]}")
+            print(f"Kelly: Home {kelly_over}, Away {kelly_under}")
+            print(f"Bankroll before: {total}, after: {totals[-1] if totals else total}")
         dates = [datetime.strptime(str(date), "%Y%m%d") for date in dates]
         return dates,[item.item() if isinstance(item, np.ndarray) else item for item in totals]
 
